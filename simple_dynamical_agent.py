@@ -24,7 +24,7 @@ def plot_temp_pos():
 
 class World:
 
-    def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=10, s_w_1=10):
+    def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1):
         # sigma (variances)
         self.s_z_0 = s_z_0
         self.s_z_1 = s_z_1
@@ -49,9 +49,16 @@ class World:
         self.sense = []
         self.sense_d1 = []
 
+        # world
+        self.temp = []
+        self.d_temp_d_pos = []
+
         # position and velocity
         self.pos = [2]
         self.velocity = [0]
+
+        # action
+        self.action = [0]
 
         # brain state mu
         self.mu = [0]
@@ -69,35 +76,37 @@ class World:
         """ change in sensation """
         sense_d1 = d_temp_d_pos(self.T0, self.pos[-1]) * \
             self.velocity[-1] + np.random.normal()
-        
+
         self.sense_d1.append(sense_d1)
 
     def upd_position(self):
-        # TODO here add action or outside
-        pos = self.pos[-1] + self.velocity
+        pos = self.pos[-1] + self.velocity[-1]
         self.pos.append(pos)
 
-    def upd_temperature(self):
-        self.temp = temp_at_pos(self.T0, self.pos)
+    def upd_temp(self):
+        self.temp.append(temp_at_pos(self.T0, self.pos[-1]))
+
+    def upd_d_temp_d_pos(self):
+        self.d_temp_d_pos.append(d_temp_d_pos(self.T0, self.pos[-1]))
 
     def upd_err_z_0(self):
         # error between sensation and generated sensations
         self.e_z_0.append(self.sense[-1] - self.mu[-1])
 
     def upd_err_z_1(self):
-        # d1 of error between sensation and generated sensations
+        # error between first derivatives of sensation and generated sensations
         self.e_z_1.append(self.sense_d1[-1] - self.mu_d1[-1])
 
     def upd_err_w_0(self):
         # error between model and generation of model
-        # here: model of dynamics (1st derivative)
+        # here: model of dynamics at 1st derivative
         # and it's generation for the 1st derivative
         self.e_w_0.append(self.mu_d1[-1] + self.mu[-1] - self.temp_desire)
 
     def upd_err_w_1(self):
         # error between model and generation of model
-        # here: model of dynamics (1st derivative)
-        # and it's generation for the 1st derivative
+        # here: model of dynamics at 2nd derivative)
+        # and it's generation for the 2nd derivative
         self.e_w_1.append(self.mu_d2[-1] + self.mu_d1[-1])
 
     def upd_mu_d2(self):
@@ -123,13 +132,26 @@ class World:
 
         self.vfe.append(vfe)
 
-    def simulate_perception(self, steps_n=200):
+    def upd_action(self):
+        upd = -self.learn_r * self.d_temp_d_pos[-1] * (self.e_z_1[-1] / self.s_z_1)
+        self.action.append(self.action[-1] + upd)
+
+    def upd_velocity(self):
+        # for this simple agent velocity is just action
+        self.velocity.append(self.action[-1])
+
+    def simulate_perception(self, steps_n=1000, act_at=200):
 
         self.reset()
 
         steps = range(steps_n)
 
-        for i in range(steps_n):
+        for step in range(steps_n):
+            # update world
+            self.upd_temp()
+            #   --> update temperature gradient
+            self.upd_d_temp_d_pos()
+
             # generate sensations
             self.generate_sense()
             self.generate_sense_d1()
@@ -141,32 +163,41 @@ class World:
             self.upd_err_w_0()
             self.upd_err_w_1()
 
-            #   --> update recognition dynamics
+            #  --> update recognition dynamics
             self.upd_mu_d2()
             self.upd_mu_d1()
             self.upd_mu()
 
-            #   --> update free energy
+            #  update agent after step act_at
+            if step > act_at:
+                self.upd_action()
+                self.upd_velocity()
+                self.upd_position()
+            
+            else:
+                # if agent is not acting update it's variables anyway
+                self.action.append(self.action[-1])
+                self.velocity.append(self.velocity[-1])
+                self.pos.append(self.pos[-1])
+
+            #  update free energy
             self.upd_vfe()
 
-            # print(self.vfe[-1])
-
-        # print('Final')
-        # print(self.mu[-1])
-        # print(self.mu_d1[-1])
-        # print(self.mu_d2[-1])
-
-        fig, ax = plt.subplots(2, 1, constrained_layout=True)
+        fig, ax = plt.subplots(3, 1, constrained_layout=True)
 
         ax[0].plot(steps, self.mu[1:])
         ax[0].plot(steps, self.mu_d1[1:])
         ax[0].plot(steps, self.mu_d2[1:])
-
         ax[0].set_title('mu change over iteration')
-
         ax[0].legend(['mu', 'mu\'', 'mu\'\''])
 
         ax[1].plot(steps, self.vfe)
         ax[1].set_title('VFE change over iteration')
+
+        ax[2].plot(steps, self.temp)
+        # ax[2].plot(steps, self.pos[1:])
+        ax[2].plot(steps, self.velocity[1:])
+        ax[2].legend(['temperature', 'velocity'])
+        ax[2].set_title('Temperature and velocity')
 
         plt.show()
