@@ -49,9 +49,7 @@ class World:
         self.sense = []
         self.sense_d1 = []
 
-        # position
-        self.v = []
-
+        # position and velocity
         self.pos = [2]
         self.velocity = [0]
 
@@ -69,12 +67,14 @@ class World:
 
     def generate_sense_d1(self):
         """ change in sensation """
-        sense_d1 = temp_at_pos(self.T0, self.pos[-1])
+        sense_d1 = d_temp_d_pos(self.T0, self.pos[-1]) * \
+            self.velocity[-1] + np.random.normal()
+        
         self.sense_d1.append(sense_d1)
 
     def upd_position(self):
-        pos = d_temp_d_pos(self.T0, self.pos[-1]) * \
-            self.velocity[-1] + np.random.normal()
+        # TODO here add action or outside
+        pos = self.pos[-1] + self.velocity
         self.pos.append(pos)
 
     def upd_temperature(self):
@@ -149,12 +149,12 @@ class World:
             #   --> update free energy
             self.upd_vfe()
 
-            print(self.vfe[-1])
+            # print(self.vfe[-1])
 
-        print('Final')
-        print(self.mu[-1])
-        print(self.mu_d1[-1])
-        print(self.mu_d2[-1])
+        # print('Final')
+        # print(self.mu[-1])
+        # print(self.mu_d1[-1])
+        # print(self.mu_d2[-1])
 
         fig, ax = plt.subplots(2, 1, constrained_layout=True)
 
@@ -162,8 +162,11 @@ class World:
         ax[0].plot(steps, self.mu_d1[1:])
         ax[0].plot(steps, self.mu_d2[1:])
 
+        ax[0].set_title('mu change over iteration')
+
         ax[0].legend(['mu', 'mu\'', 'mu\'\''])
 
         ax[1].plot(steps, self.vfe)
+        ax[1].set_title('VFE change over iteration')
 
         plt.show()
