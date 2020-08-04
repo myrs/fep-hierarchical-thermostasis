@@ -122,7 +122,6 @@ class World:
         upd += self.mu_d2[-2]
         upd *= self.dt
 
-
         self.mu_d1.append(self.mu_d1[-1] + upd)
 
     def upd_mu(self):
@@ -146,7 +145,7 @@ class World:
         upd = -self.learn_r * self.d_temp_d_pos[-1] * (self.e_z_1[-1] / self.s_z_1)
         upd *= self.dt
         # print(upd)
-        # update interpretation 
+        # update interpretation
         self.action.append(self.action[-1] + upd)
         # action interpretation
         # self.action.append(upd)
@@ -155,13 +154,14 @@ class World:
         # for this simple agent velocity is just action
         self.velocity.append(self.action[-1])
 
-    def simulate_perception(self, steps_n=1000, act_at=200):
+    def simulate_perception(self, sim_time=100, act_time=25):
 
         self.reset()
 
-        steps = range(steps_n)
+        steps = int(sim_time / self.dt)
+        print(steps)
 
-        for step in range(steps_n):
+        for step in range(steps):
             # update world
             self.upd_temp()
             #   --> update temperature gradient
@@ -184,11 +184,11 @@ class World:
             self.upd_mu()
 
             #  update agent after step act_at
-            if step > act_at:
+            if step * self.dt > act_time:
                 self.upd_action()
                 self.upd_velocity()
                 self.upd_position()
-            
+
             else:
                 # if agent is not acting update it's variables anyway
                 self.action.append(self.action[-1])
@@ -198,27 +198,28 @@ class World:
             #  update free energy
             self.upd_vfe()
 
-        fig, ax = plt.subplots(6, 1, constrained_layout=True)
+        fig, ax = plt.subplots(5, 1, constrained_layout=True)
 
-        ax[0].plot(steps, self.mu[1:])
-        ax[0].plot(steps, self.mu_d1[1:])
-        ax[0].plot(steps, self.mu_d2[1:])
+        timeline = [s * self.dt for s in range(steps)]
+
+        ax[0].plot(timeline, self.mu[1:])
+        ax[0].plot(timeline, self.mu_d1[1:])
+        ax[0].plot(timeline, self.mu_d2[1:])
         ax[0].set_title('mu change over iteration')
         ax[0].legend(['mu', 'mu\'', 'mu\'\''])
 
-        ax[1].plot(steps, self.vfe)
+        ax[1].plot(timeline, self.vfe)
         ax[1].set_title('VFE change over iteration')
 
-        ax[2].plot(steps, self.temp)
-        # ax[2].plot(steps, self.pos[1:])
-        ax[2].plot(steps, self.velocity[1:])
-        ax[2].legend(['temperature', 'velocity'])
-        ax[2].set_title('Temperature and velocity')
+        ax[2].plot(timeline, self.temp)
+        ax[2].plot(timeline, self.pos[1:])
+        ax[2].legend(['temperature', 'position'])
+        ax[2].set_title('Temperature and position')
 
-        ax[3].plot(steps, self.e_z_1)
+        ax[3].plot(timeline, self.d_temp_d_pos)
+        ax[3].set_title('Temperature gradient')
 
-        ax[4].plot(steps, self.d_temp_d_pos)
-
-        ax[5].plot(steps, self.pos[1:])
+        ax[4].plot(timeline, self.velocity[1:])
+        ax[4].set_title('velocity')
 
         plt.show()
