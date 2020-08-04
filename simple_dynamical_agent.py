@@ -81,7 +81,7 @@ class World:
         self.sense_d1.append(sense_d1)
 
     def upd_position(self):
-        pos = self.pos[-1] + self.velocity[-1]
+        pos = self.pos[-1] + self.dt * self.velocity[-1]
         self.pos.append(pos)
 
     def upd_temp(self):
@@ -112,12 +112,15 @@ class World:
 
     def upd_mu_d2(self):
         upd = -self.learn_r * (self.e_w_1[-1] / self.s_w_1)
+        upd *= self.dt
+
         self.mu_d2.append(self.mu_d2[-1] + upd)
 
     def upd_mu_d1(self):
         upd = -self.learn_r * (-self.e_z_1[-1] / self.s_z_1 +
                                self.e_w_0[-1] / self.s_w_0 + self.e_w_1[-1] / self.s_w_1)
         upd += self.mu_d2[-2]
+        upd *= self.dt
 
 
         self.mu_d1.append(self.mu_d1[-1] + upd)
@@ -125,7 +128,8 @@ class World:
     def upd_mu(self):
         upd = -self.learn_r * \
             (-self.e_z_0[-1] / self.s_z_0 + self.e_w_0[-1] / self.s_w_0)
-        upd += self.mu_d1[-2] 
+        upd += self.mu_d1[-2]
+        upd *= self.dt
 
         self.mu.append(self.mu[-1] + upd)
 
@@ -140,6 +144,7 @@ class World:
 
     def upd_action(self):
         upd = -self.learn_r * self.d_temp_d_pos[-1] * (self.e_z_1[-1] / self.s_z_1)
+        upd *= self.dt
         # print(upd)
         # update interpretation 
         self.action.append(self.action[-1] + upd)
