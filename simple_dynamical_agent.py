@@ -32,9 +32,10 @@ class World:
         self.s_w_1 = s_w_1
 
         # learning rate
-        self.learn_r = 0.01
+        self.learn_r = 0.1
+        self.dt = 0.005
         self.T0 = 100
-        self.temp_desire = 0
+        self.temp_desire = 4
 
         self.reset()
 
@@ -116,11 +117,16 @@ class World:
     def upd_mu_d1(self):
         upd = -self.learn_r * (-self.e_z_1[-1] / self.s_z_1 +
                                self.e_w_0[-1] / self.s_w_0 + self.e_w_1[-1] / self.s_w_1)
+        upd += self.mu_d2[-2]
+
+
         self.mu_d1.append(self.mu_d1[-1] + upd)
 
     def upd_mu(self):
         upd = -self.learn_r * \
             (-self.e_z_0[-1] / self.s_z_0 + self.e_w_0[-1] / self.s_w_0)
+        upd += self.mu_d1[-2] 
+
         self.mu.append(self.mu[-1] + upd)
 
     def upd_vfe(self):
@@ -134,7 +140,11 @@ class World:
 
     def upd_action(self):
         upd = -self.learn_r * self.d_temp_d_pos[-1] * (self.e_z_1[-1] / self.s_z_1)
+        # print(upd)
+        # update interpretation 
         self.action.append(self.action[-1] + upd)
+        # action interpretation
+        # self.action.append(upd)
 
     def upd_velocity(self):
         # for this simple agent velocity is just action
@@ -183,7 +193,7 @@ class World:
             #  update free energy
             self.upd_vfe()
 
-        fig, ax = plt.subplots(3, 1, constrained_layout=True)
+        fig, ax = plt.subplots(6, 1, constrained_layout=True)
 
         ax[0].plot(steps, self.mu[1:])
         ax[0].plot(steps, self.mu_d1[1:])
@@ -199,5 +209,11 @@ class World:
         ax[2].plot(steps, self.velocity[1:])
         ax[2].legend(['temperature', 'velocity'])
         ax[2].set_title('Temperature and velocity')
+
+        ax[3].plot(steps, self.e_z_1)
+
+        ax[4].plot(steps, self.d_temp_d_pos)
+
+        ax[5].plot(steps, self.pos[1:])
 
         plt.show()
