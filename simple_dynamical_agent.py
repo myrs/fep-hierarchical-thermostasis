@@ -21,6 +21,8 @@ def plot_temp_pos():
     plt.plot(x, y_d)
     plt.legend(['temperature(position)', 'd temperature / d position'])
 
+def get_noise():
+    return np.random.normal() * 0.1
 
 class World:
 
@@ -33,6 +35,7 @@ class World:
 
         # learning rate
         self.learn_r = 0.1
+        self.learn_r_a = 0.01
         self.dt = 0.005
         self.T0 = 100
         self.temp_desire = 4
@@ -70,13 +73,13 @@ class World:
         self.vfe = []
 
     def generate_sense(self):
-        sense = temp_at_pos(self.T0, self.pos[-1]) + np.random.normal()
+        sense = temp_at_pos(self.T0, self.pos[-1]) + get_noise()
         self.sense.append(sense)
 
     def generate_sense_d1(self):
         """ change in sensation """
         sense_d1 = d_temp_d_pos(self.T0, self.pos[-1]) * \
-            self.velocity[-1] + np.random.normal()
+            self.velocity[-1] + get_noise()
 
         self.sense_d1.append(sense_d1)
 
@@ -142,7 +145,7 @@ class World:
         self.vfe.append(vfe)
 
     def upd_action(self):
-        upd = -self.learn_r * self.d_temp_d_pos[-1] * (self.e_z_1[-1] / self.s_z_1)
+        upd = -self.learn_r_a * self.d_temp_d_pos[-1] * (self.e_z_1[-1] / self.s_z_1)
         upd *= self.dt
         # print(upd)
         # update interpretation
