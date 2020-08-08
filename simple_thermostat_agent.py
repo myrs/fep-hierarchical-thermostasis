@@ -12,7 +12,7 @@ def get_noise():
 class TermosatWorld:
 
     def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1,
-                 action_bound=np.inf, temp_const_change_initial=0,
+                 action_bound=5.8, temp_const_change_initial=0,
                  temp_viable_range=10):
         # sigma (variances)
         self.s_z_0 = s_z_0
