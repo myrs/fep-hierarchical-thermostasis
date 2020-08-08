@@ -4,12 +4,15 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+
 def get_noise():
     return np.random.normal() * 0.1
 
+
 class TermosatWorld:
 
-    def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1, action_bound=np.inf):
+    def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1,
+                 action_bound=np.inf, temp_const_change=0):
         # sigma (variances)
         self.s_z_0 = s_z_0
         self.s_z_1 = s_z_1
@@ -26,6 +29,7 @@ class TermosatWorld:
 
         # action bound -- agent can't set action more or less than this
         self.action_bound = action_bound
+        self.temp_const_change = temp_const_change
 
         self.reset()
 
@@ -74,6 +78,8 @@ class TermosatWorld:
     def upd_temp(self):
         # update temperature with the current temperature update
         upd = self.temp_change[-1]
+        # update temperature by constant (e.g. world is heating constantly)
+        upd += self.temp_const_change
         upd *= self.dt
 
         self.temp.append(self.temp[-1] + upd)
@@ -136,16 +142,12 @@ class TermosatWorld:
         action = self.action[-1] + upd
 
         # action must be bound by some plausible constraints
-        # e.g. temperature can't change more than 5 at each timestep
-
+        # e.g. temperature can't change more than action bound at each timestep
         if abs(action) > self.action_bound:
             action = np.sign(action) * self.action_bound
 
-        # print(upd)
-        # update interpretation
+        # update action
         self.action.append(action)
-        # action interpretation
-        # self.action.append(upd)
 
     def upd_temp_change(self):
         # for this simple agent temp_change is just action
@@ -200,24 +202,23 @@ class TermosatWorld:
         ax[0].plot(timeline, self.mu[1:])
         ax[0].plot(timeline, self.mu_d1[1:])
         ax[0].plot(timeline, self.mu_d2[1:])
-        ax[0].set_title('mu change over iteration')
-        ax[0].legend(['mu', 'mu\'', 'mu\'\''])
+        ax[0].set_title('mu over time')
+        ax[0].legend(['mu', 'mu\'', 'mu\'\''], loc='upper right')
 
         ax[1].plot(timeline, self.vfe)
-        ax[1].set_title('VFE change over iteration')
+        ax[1].set_title('VFE over time')
 
         ax[2].plot(timeline, self.temp[1:])
-        ax[2].legend(['temperature'])
-        ax[2].set_title('Temperature and position')
+        ax[2].set_title('Temperature over time')
 
         ax[3].plot(timeline, self.temp_change[1:])
-        ax[3].set_title('temp_change')
+        ax[3].set_title('Temperature change over time')
 
         ax[4].plot(timeline, self.e_z_0)
         ax[4].plot(timeline, self.e_z_1)
         ax[4].plot(timeline, self.e_w_0)
         ax[4].plot(timeline, self.e_w_1)
-        ax[4].set_title('Error')
-        ax[4].legend(['e_z_0', 'e_z_1', 'e_w_0', 'e_w_1'])
+        ax[4].set_title('Error over time')
+        ax[4].legend(['e_z_0', 'e_z_1', 'e_w_0', 'e_w_1'], loc='upper right')
 
         plt.show()
