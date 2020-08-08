@@ -161,6 +161,8 @@ class World:
 
         self.reset()
 
+        plt.ion()
+
         steps = int(sim_time / self.dt)
         print(steps)
 
@@ -201,28 +203,35 @@ class World:
             #  update free energy
             self.upd_vfe()
 
-        fig, ax = plt.subplots(5, 1, constrained_layout=True)
+        fig, ax = plt.subplots(5, 2, constrained_layout=True)
 
         timeline = [s * self.dt for s in range(steps)]
 
-        ax[0].plot(timeline, self.mu[1:])
-        ax[0].plot(timeline, self.mu_d1[1:])
-        ax[0].plot(timeline, self.mu_d2[1:])
-        ax[0].set_title('mu change over iteration')
-        ax[0].legend(['mu', 'mu\'', 'mu\'\''])
+        ax[0][0].plot(timeline, self.mu[1:])
+        ax[0][0].plot(timeline, self.mu_d1[1:])
+        ax[0][0].plot(timeline, self.mu_d2[1:])
+        ax[0][0].set_title('mu change over iteration')
+        ax[0][0].legend(['mu', 'mu\'', 'mu\'\''])
 
-        ax[1].plot(timeline, self.vfe)
-        ax[1].set_title('VFE change over iteration')
+        ax[1][0].plot(timeline, self.vfe)
+        ax[1][0].set_title('VFE change over iteration')
 
-        ax[2].plot(timeline, self.temp)
-        ax[2].plot(timeline, self.pos[1:])
-        ax[2].legend(['temperature', 'position'])
-        ax[2].set_title('Temperature and position')
+        ax[2][0].plot(timeline, self.temp)
+        ax[2][0].plot(timeline, self.pos[1:])
+        ax[2][0].legend(['temperature', 'position'])
+        ax[2][0].set_title('Temperature and position')
 
-        ax[3].plot(timeline, self.d_temp_d_pos)
-        ax[3].set_title('Temperature gradient')
+        ax[3][0].plot(timeline, self.d_temp_d_pos)
+        ax[3][0].set_title('Temperature gradient')
 
-        ax[4].plot(timeline, self.velocity[1:])
-        ax[4].set_title('velocity')
+        ax[4][0].plot(timeline, self.velocity[1:])
+        ax[4][0].set_title('velocity')
+
+        ax[0][1].plot(timeline, self.e_z_0)
+        ax[0][1].plot(timeline, self.e_z_1)
+        ax[0][1].plot(timeline, self.e_w_0)
+        ax[0][1].plot(timeline, self.e_w_1)
+        ax[0][1].set_title('Error')
+        ax[0][1].legend(['e_z_0', 'e_z_1', 'e_w_0', 'e_w_1'])
 
         plt.show()
