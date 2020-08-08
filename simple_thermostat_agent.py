@@ -190,7 +190,7 @@ class TermosatWorld:
         # update action
         self.action.append(action)
 
-    def simulate_perception(self, sim_time=100, act_time=25):
+    def simulate_perception(self, sim_time=250, act_time=2):
 
         self.reset()
 
