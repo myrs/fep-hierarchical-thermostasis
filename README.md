@@ -23,7 +23,7 @@ Simulation ends at the time step 250.
 
 An agent can change it's temperature in a boundary of ±5.8 °C. It's viable range is 36 ±10 °C. 
 
-From the provided simulation it can be observed that an agent can effectively deal with changes of temperature (both constant and sudden) and maintain itself in a viable interval for most of the environmental disturbances. At this point of project the important point to make is that this agent is unable to deal with a change of the temperature when it's outside of the boundaries. Recall that from at time steps from 150 to 200 it is -6 °C per step, while an agent can only regulate it until 5.8 °C per step. Effectively and sadly, out agent would cease to exist.
+From the provided simulation it can be observed that an agent can effectively deal with changes of temperature (both constant and sudden) and maintain itself in a viable interval for most of the environmental disturbances. At this point of project the important point to make is that this agent is unable to deal with a change of the temperature when it's outside of the boundaries. Recall that at time steps from 150 to 200 it is -6 °C per step, while an agent can only regulate it until 5.8 °C per step. Effectively and sadly, our agent would cease to exist.
 
 ## Next steps
 
@@ -35,8 +35,7 @@ This project is inspired in (and roughly follows the) hierarchical model of acti
 Instructions are given for unix-based systems (MacOS, Linux) and can differ slightly for Windows
 
 #### Essentials
-`Python 3.8` or higher with `pip`
-These should be installed on most systems, if not, detailed guides depending on operating system can be found [here](https://www.makeuseof.com/tag/install-pip-for-python/) or elsewhere
+`Python 3.8` or higher with `pip`. These should be installed on most systems, if not, detailed guides depending on operating system can be found [here](https://www.makeuseof.com/tag/install-pip-for-python/) or elsewhere
 
 #### Creating virtual environment (optional but highly recommended)
 From project folder run 
@@ -44,7 +43,7 @@ From project folder run
 to create a virtual environment (or use you preferred name).
 
 To activate the environment, run:
- ```source .env-fep-hierarchical-thermostasis```
+ ```source .env-fep-hierarchical-thermostasis/bin/activate```
 
 #### Installing python libraries
 Run 
