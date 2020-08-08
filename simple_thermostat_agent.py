@@ -12,7 +12,8 @@ def get_noise():
 class TermosatWorld:
 
     def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1,
-                 action_bound=np.inf, temp_const_change=0):
+                 action_bound=np.inf, temp_const_change_initial=0,
+                 temp_viable_range=10):
         # sigma (variances)
         self.s_z_0 = s_z_0
         self.s_z_1 = s_z_1
@@ -21,15 +22,16 @@ class TermosatWorld:
 
         # learning rate
         self.learn_r = 0.1
-        self.learn_r_a = self.learn_r
+        self.learn_r_a = 0.1
         # 0.5 will produce too much noise
         self.dt = 0.1
-        self.T0 = 100
+        self.T0 = 36
         self.temp_desire = 36
+        self.temp_viable_range = temp_viable_range
 
         # action bound -- agent can't set action more or less than this
         self.action_bound = action_bound
-        self.temp_const_change = temp_const_change
+        self.temp_const_change_initial = temp_const_change_initial
 
         self.reset()
 
@@ -56,6 +58,8 @@ class TermosatWorld:
         # temperature change set by action
         # TODO here should be some non-linearity!
         self.temp_change = [0]
+        self.temp_const_change = [self.temp_const_change_initial]
+        self.temp_relative_change = [0]
 
         # brain state mu
         self.mu = [0]
@@ -75,14 +79,51 @@ class TermosatWorld:
 
         self.sense_d1.append(sense_d1)
 
+    def update_world(self):
+        """ update world parameters (temperature, T0)
+            an agent lives in """
+
+        # an agent lives in a world where the temperature changes
+        # over time
+        # it rises during first 50 steps
+        # then stays the same during next 50 steps
+        # and lowers strongly during next 50 steps
+
+        # this is to show an agent won't survive just with
+        # and autonomic reflex
+
+        if self.time == 10:
+            temp_const_change = 2
+        elif self.time == 50:
+            temp_const_change = 5
+        elif self.time == 100:
+            temp_const_change = -1
+        elif self.time == 150:
+            temp_const_change = -6
+        elif self.time == 200:
+            temp_const_change = 0
+        else:
+            temp_const_change = self.temp_const_change[-1]
+
+        relative_change = self.temp_const_change[-1] - temp_const_change
+        self.temp_relative_change.append(relative_change)
+
+        self.temp_const_change.append(temp_const_change)
+
     def upd_temp(self):
         # update temperature with the current temperature update
         upd = self.temp_change[-1]
-        # update temperature by constant (e.g. world is heating constantly)
-        upd += self.temp_const_change
         upd *= self.dt
 
         self.temp.append(self.temp[-1] + upd)
+
+    def upd_temp_change(self):
+        # for this simple agent temp_change is just action
+        # update temperature by constant (e.g. world is heating constantly)
+        upd = self.temp_const_change[-1]
+        upd += self.action[-1]
+
+        self.temp_change.append(upd)
 
     def upd_err_z_0(self):
         # error between sensation and generated sensations
@@ -149,10 +190,6 @@ class TermosatWorld:
         # update action
         self.action.append(action)
 
-    def upd_temp_change(self):
-        # for this simple agent temp_change is just action
-        self.temp_change.append(self.action[-1])
-
     def simulate_perception(self, sim_time=100, act_time=25):
 
         self.reset()
@@ -163,7 +200,9 @@ class TermosatWorld:
         print(steps)
 
         for step in range(steps):
+            self.time = int(step * self.dt)
             # update world
+            self.update_world()
             self.upd_temp()
 
             # generate sensations
@@ -182,43 +221,60 @@ class TermosatWorld:
             self.upd_mu_d1()
             self.upd_mu()
 
+            self.upd_temp_change()
+
             #  update agent after step act_at
             if step * self.dt > act_time:
                 self.upd_action()
-                self.upd_temp_change()
 
             else:
                 # if agent is not acting update it's variables anyway
                 self.action.append(self.action[-1])
-                self.temp_change.append(self.temp_change[-1])
 
             #  update free energy
             self.upd_vfe()
 
-        fig, ax = plt.subplots(5, 1, constrained_layout=True)
+        fig, ax = plt.subplots(3, 2, constrained_layout=True)
 
         timeline = [s * self.dt for s in range(steps)]
 
-        ax[0].plot(timeline, self.mu[1:])
-        ax[0].plot(timeline, self.mu_d1[1:])
-        ax[0].plot(timeline, self.mu_d2[1:])
-        ax[0].set_title('mu over time')
-        ax[0].legend(['mu', 'mu\'', 'mu\'\''], loc='upper right')
+        ax[0][0].plot(timeline, self.temp[1:])
+        ax[0][0].set_title('Organism temperature')
+        min_temp = self.temp_desire - self.temp_viable_range
+        max_temp = self.temp_desire + self.temp_viable_range
+        ax[0][0].plot(timeline, np.ones_like(timeline) *
+                      min_temp, lw=0.75, ls='--', c='red')
+        ax[0][0].plot(timeline, np.ones_like(timeline) *
+                      max_temp, lw=0.75, ls='--', c='red')
+        ax[0][0].legend(['temperature', 'viable'], loc='upper right')
 
-        ax[1].plot(timeline, self.vfe)
-        ax[1].set_title('VFE over time')
+        ax[1][0].plot(timeline, self.temp_change[1:])
+        ax[1][0].plot(timeline, np.zeros_like(timeline), lw=0.75, ls='--')
+        ax[1][0].set_title('Organism temperature change')
 
-        ax[2].plot(timeline, self.temp[1:])
-        ax[2].set_title('Temperature over time')
+        ax[2][0].plot(timeline, self.temp_const_change[1:])
+        ax[2][0].plot(timeline, self.action[1:])
+        diff = np.array(self.temp_const_change[1:]) + np.array(self.action[1:])
+        ax[2][0].plot(timeline, diff, lw=0.75, ls='--')
+        ax[2][0].legend(['temp change', 'action', 'diff'], loc='upper right')
+        ax[2][0].set_title('External temperature change and action')
 
-        ax[3].plot(timeline, self.temp_change[1:])
-        ax[3].set_title('Temperature change over time')
+        ax[0][1].plot(timeline, self.mu[1:])
+        ax[0][1].plot(timeline, self.mu_d1[1:])
+        ax[0][1].plot(timeline, self.mu_d2[1:])
+        ax[0][1].set_title('mu over time')
+        ax[0][1].legend(['mu', 'mu\'', 'mu\'\''], loc='upper right')
 
-        ax[4].plot(timeline, self.e_z_0)
-        ax[4].plot(timeline, self.e_z_1)
-        ax[4].plot(timeline, self.e_w_0)
-        ax[4].plot(timeline, self.e_w_1)
-        ax[4].set_title('Error over time')
-        ax[4].legend(['e_z_0', 'e_z_1', 'e_w_0', 'e_w_1'], loc='upper right')
+        ax[1][1].plot(timeline, self.vfe)
+        ax[1][1].set_title('VFE')
+        ax[1][1].set_ylim(-0.1, 500)
+
+        ax[2][1].plot(timeline, self.e_z_0)
+        ax[2][1].plot(timeline, self.e_z_1)
+        ax[2][1].plot(timeline, self.e_w_0)
+        ax[2][1].plot(timeline, self.e_w_1)
+        ax[2][1].set_ylim(-10, 10)
+        ax[2][1].set_title('Error')
+        ax[2][1].legend(['e_z_0', 'e_z_1', 'e_w_0', 'e_w_1'], loc='upper right')
 
         plt.show()
