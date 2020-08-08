@@ -9,7 +9,7 @@ def get_noise():
 
 class TermosatWorld:
 
-    def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1):
+    def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1, action_bound=np.inf):
         # sigma (variances)
         self.s_z_0 = s_z_0
         self.s_z_1 = s_z_1
@@ -23,6 +23,9 @@ class TermosatWorld:
         self.dt = 0.1
         self.T0 = 100
         self.temp_desire = 36
+
+        # action bound -- agent can't set action more or less than this
+        self.action_bound = action_bound
 
         self.reset()
 
@@ -130,9 +133,17 @@ class TermosatWorld:
         # sensation change over action is always 1
         upd = -self.learn_r_a * 1 * (self.e_z_1[-1] / self.s_z_1)
         upd *= self.dt
+        action = self.action[-1] + upd
+
+        # action must be bound by some plausible constraints
+        # e.g. temperature can't change more than 5 at each timestep
+
+        if abs(action) > self.action_bound:
+            action = np.sign(action) * self.action_bound
+
         # print(upd)
         # update interpretation
-        self.action.append(self.action[-1] + upd)
+        self.action.append(action)
         # action interpretation
         # self.action.append(upd)
 
