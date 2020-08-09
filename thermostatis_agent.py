@@ -9,7 +9,7 @@ def get_noise():
     return np.random.normal() * 0.1
 
 
-class TermosatWorld:
+class InteroceptiveAgent:
 
     def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1,
                  action_bound=5.8, temp_const_change_initial=0,
@@ -25,8 +25,8 @@ class TermosatWorld:
         self.learn_r_a = 0.1
         # 0.5 will produce too much noise
         self.dt = 0.1
-        self.T0 = 36
-        self.temp_desire = 36
+        self.T0 = 30
+        self.temp_viable_mean = 30
         self.temp_viable_range = temp_viable_range
 
         # action bound -- agent can't set action more or less than this
@@ -50,9 +50,6 @@ class TermosatWorld:
         # start with temperature at T0
         self.temp = [self.T0]
 
-        # position and temp_change
-        # self.temp_change = [0]
-
         # action
         self.action = [0]
         # temperature change set by action
@@ -60,6 +57,7 @@ class TermosatWorld:
         self.temp_change = [0]
         self.temp_const_change = [self.temp_const_change_initial]
         self.temp_relative_change = [0]
+        self.temp_desire = [self.temp_viable_mean]
 
         # brain state mu
         self.mu = [0]
@@ -137,7 +135,7 @@ class TermosatWorld:
         # error between model and generation of model
         # here: model of dynamics at 1st derivative
         # and it's generation for the 1st derivative
-        self.e_w_0.append(self.mu_d1[-1] + self.mu[-1] - self.temp_desire)
+        self.e_w_0.append(self.mu_d1[-1] + self.mu[-1] - self.temp_desire[-1])
 
     def upd_err_w_1(self):
         # error between model and generation of model
@@ -190,63 +188,39 @@ class TermosatWorld:
         # update action
         self.action.append(action)
 
-    def simulate_perception(self, sim_time=250, act_time=2):
+    def interoception(self):
+        # update interoception
+        #   --> update errors
+        self.upd_err_z_0()
+        self.upd_err_z_1()
+        self.upd_err_w_0()
+        self.upd_err_w_1()
 
-        self.reset()
+        #  --> update recognition dynamics
+        self.upd_mu_d2()
+        self.upd_mu_d1()
+        self.upd_mu()
 
-        plt.ion()
+    def active_inference(self):
+        self.temp_desire.append(self.temp_viable_mean)
+        self.interoception()
 
-        steps = int(sim_time / self.dt)
-        print(steps)
-
-        for step in range(steps):
-            self.time = int(step * self.dt)
-            # update world
-            self.update_world()
-            self.upd_temp()
-
-            # generate sensations
-            self.generate_sense()
-            self.generate_sense_d1()
-
-            # update perception
-            #   --> update errors
-            self.upd_err_z_0()
-            self.upd_err_z_1()
-            self.upd_err_w_0()
-            self.upd_err_w_1()
-
-            #  --> update recognition dynamics
-            self.upd_mu_d2()
-            self.upd_mu_d1()
-            self.upd_mu()
-
-            self.upd_temp_change()
-
-            #  update agent after step act_at
-            if step * self.dt > act_time:
-                self.upd_action()
-
-            else:
-                # if agent is not acting update it's variables anyway
-                self.action.append(self.action[-1])
-
-            #  update free energy
-            self.upd_vfe()
-
+    def plot_results(self):
         fig, ax = plt.subplots(3, 2, constrained_layout=True)
 
-        timeline = [s * self.dt for s in range(steps)]
+        timeline = [s * self.dt for s in range(self.steps)]
 
         ax[0][0].plot(timeline, self.temp[1:])
+        ax[0][0].plot(timeline, self.temp_desire[1:], ls='--', lw=0.75, c='green')
         ax[0][0].set_title('Organism temperature')
-        min_temp = self.temp_desire - self.temp_viable_range
-        max_temp = self.temp_desire + self.temp_viable_range
+        min_temp = self.temp_viable_mean - self.temp_viable_range
+        max_temp = self.temp_viable_mean + self.temp_viable_range
         ax[0][0].plot(timeline, np.ones_like(timeline) *
                       min_temp, lw=0.75, ls='--', c='red')
         ax[0][0].plot(timeline, np.ones_like(timeline) *
                       max_temp, lw=0.75, ls='--', c='red')
-        ax[0][0].legend(['temperature', 'viable'], loc='upper right')
+        ax[0][0].legend(['temp', 'desired temp', 'viable range'], loc='lower left')
+        ax[0][0].set_ylim(10, 45)
 
         ax[1][0].plot(timeline, self.temp_change[1:])
         ax[1][0].plot(timeline, np.zeros_like(timeline), lw=0.75, ls='--')
@@ -278,3 +252,57 @@ class TermosatWorld:
         ax[2][1].legend(['e_z_0', 'e_z_1', 'e_w_0', 'e_w_1'], loc='upper right')
 
         plt.show()
+
+    def simulate_perception(self, sim_time=250, act_time=2):
+        self.reset()
+
+        plt.ion()
+
+        self.steps = int(sim_time / self.dt)
+        print('Simulating %s steps', self.steps)
+
+        for step in range(self.steps):
+            self.time = int(step * self.dt)
+            # update world
+            self.update_world()
+            self.upd_temp_change()
+            self.upd_temp()
+
+            # generate sensations
+            self.generate_sense()
+            self.generate_sense_d1()
+
+            # perform active inference
+            self.active_inference()
+            #  update free energy
+            self.upd_vfe()
+
+            #  act
+            if step * self.dt > act_time:
+                self.upd_action()
+
+            else:
+                # if agent is not acting update it's variables anyway
+                self.action.append(self.action[-1])
+
+        self.plot_results()
+
+
+class ExteroceptiveAgent(InteroceptiveAgent):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def exteroception(self):
+        # an agent sets it's desired temperature
+        # based on exteroception
+        # TODO mocked for now
+        if self.time >= 120 and self.time <= 200:
+            self.temp_desire.append(37)
+        else:
+            self.temp_desire.append(self.temp_viable_mean)
+
+    def active_inference(self):
+        # update exteroception
+        self.exteroception()
+        self.interoception()
