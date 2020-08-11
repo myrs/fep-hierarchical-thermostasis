@@ -56,11 +56,13 @@ to install python libraries, used in this project.
 ### Running project
 For now the project can be run using python interactive console `python3` (`ipython3` recommended).
 
-Run `ipython3` and then execute the following lines to see the results of a simulation of the simple thermostat agent:
+Run `ipython3` and then execute the following lines to see the results of a simulation of the interoceptive thermostasis agent:
 ```
 from simple_thermostat_agent import *
-# initialize world
-wt = TermosatWorld(s_z_0=.1, s_z_1=.1, s_w_0=.1, s_w_1=.1, action_bound=5.8)
+# initialize Agent's world
+ia = InteroceptiveAgent()
 # run a simulation
-wt.simulate_perception()
+ia.simulate_perception()
 ```
+
+To see results for the exteroceptive agent, change `InteroceptiveAgent` to `ExteroceptiveAgent`.
