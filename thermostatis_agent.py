@@ -22,7 +22,7 @@ class InteroceptiveAgent:
 
         # learning rate
         self.learn_r = 0.1
-        self.learn_r_a = 0.1
+        self.learn_r_a = self.learn_r
         # 0.5 will produce too much noise
         self.dt = 0.1
         self.T0 = 30
@@ -260,7 +260,7 @@ class InteroceptiveAgent:
 
         plt.show()
 
-    def simulate_perception(self, sim_time=300, act_time=2):
+    def simulate(self, sim_time=300, act_time=50):
         self.reset()
 
         plt.ion()
@@ -320,8 +320,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         # as it does not matter in this case
         super().__init__(**kwargs)
 
-
-        self.learn_r_ex = 0.1
+        self.learn_r_ex = self.learn_r
 
         # sigma (variances)
         self.ex_s_z_0 = ex_s_z_0
