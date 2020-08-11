@@ -67,6 +67,10 @@ class InteroceptiveAgent:
         # variational free energy
         self.vfe = []
 
+    def generate_senses(self):
+        self.generate_sense()
+        self.generate_sense_d1()
+
     def generate_sense(self):
         sense = self.temp[-1] + get_noise()
         self.sense.append(sense)
@@ -90,15 +94,15 @@ class InteroceptiveAgent:
         # this is to show an agent won't survive just with
         # and autonomic reflex
 
-        if self.time == 10:
+        if self.time == 50:
             temp_const_change = 2
-        elif self.time == 50:
-            temp_const_change = 5
         elif self.time == 100:
-            temp_const_change = -1
+            temp_const_change = 5
         elif self.time == 150:
-            temp_const_change = -6
+            temp_const_change = -1
         elif self.time == 200:
+            temp_const_change = -6
+        elif self.time == 250:
             temp_const_change = 0
         else:
             temp_const_change = self.temp_const_change[-1]
@@ -201,6 +205,9 @@ class InteroceptiveAgent:
         self.upd_mu_d1()
         self.upd_mu()
 
+        #  update free energy
+        self.upd_vfe()
+
     def active_inference(self):
         self.temp_desire.append(self.temp_viable_mean)
         self.interoception()
@@ -253,7 +260,7 @@ class InteroceptiveAgent:
 
         plt.show()
 
-    def simulate_perception(self, sim_time=250, act_time=2):
+    def simulate_perception(self, sim_time=300, act_time=2):
         self.reset()
 
         plt.ion()
@@ -269,13 +276,10 @@ class InteroceptiveAgent:
             self.upd_temp()
 
             # generate sensations
-            self.generate_sense()
-            self.generate_sense_d1()
+            self.generate_senses()
 
             # perform active inference
             self.active_inference()
-            #  update free energy
-            self.upd_vfe()
 
             #  act
             if step * self.dt > act_time:
@@ -288,7 +292,7 @@ class InteroceptiveAgent:
         self.plot_results()
 
 
-class ExteroceptiveAgent(InteroceptiveAgent):
+class MockExteroceptiveAgent(InteroceptiveAgent):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -296,9 +300,10 @@ class ExteroceptiveAgent(InteroceptiveAgent):
     def exteroception(self):
         # an agent sets it's desired temperature
         # based on exteroception
-        # TODO mocked for now
+        # mocking exteroceptive inference
         if self.time >= 120 and self.time <= 200:
-            self.temp_desire.append(37)
+            # set the temperature high enough to survive upcoming cold
+            self.temp_desire.append(self.temp_viable_mean + 7)
         else:
             self.temp_desire.append(self.temp_viable_mean)
 
@@ -306,3 +311,154 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         # update exteroception
         self.exteroception()
         self.interoception()
+
+
+class ExteroceptiveAgent(InteroceptiveAgent):
+
+    def __init__(self, ex_s_z_0=0.01, ex_s_w_0=100000, **kwargs):
+        # variance is set to be very high for internal model
+        # as it does not matter in this case
+        super().__init__(**kwargs)
+
+
+        self.learn_r_ex = 0.1
+
+        # sigma (variances)
+        self.ex_s_z_0 = ex_s_z_0
+        self.ex_s_w_0 = ex_s_w_0
+
+    def reset(self):
+        super().reset()
+
+        # exteroceptive sense
+        self.luminance_change = [0]
+        self.ex_sense = []
+
+        # exteroceptive errors
+        self.ex_e_z_0 = []
+        self.ex_e_w_0 = []
+
+        # brain state mu
+        self.ex_mu = [0]
+        self.ex_mu_d1 = [0]
+
+        # variational free energy
+        self.ex_vfe = []
+
+    def generate_senses(self):
+        super().generate_senses()
+        self.generate_ex_sense()
+
+    def generate_ex_sense(self):
+        ex_sense = self.luminance_change[-1] + get_noise()
+        self.ex_sense.append(ex_sense)
+
+    def upd_ex_err_z_0(self):
+        # error between sensation and generated sensations
+        self.ex_e_z_0.append(self.ex_sense[-1] + 0.1 * (self.ex_mu[-1] - 30))
+
+    def upd_ex_err_w_0(self):
+        # error between model and generation of model
+        # here: model of dynamics at 1st derivative
+        # and it's generation for the 1st derivative
+        self.ex_e_w_0.append(self.ex_mu_d1[-1] + self.ex_mu[-1])
+
+    def upd_ex_mu_d1(self):
+        upd = -self.learn_r_ex * (self.ex_e_w_0[-1] / self.ex_s_w_0)
+        upd *= self.dt
+
+        self.ex_mu_d1.append(self.ex_mu_d1[-1] + upd)
+
+    def upd_ex_mu(self):
+        upd = -self.learn_r_ex * \
+            (0.1 * self.ex_e_z_0[-1] / self.ex_s_z_0 +
+             self.ex_e_w_0[-1] / self.ex_s_w_0)
+        upd += self.ex_mu_d1[-2]
+        upd *= self.dt
+
+        self.ex_mu.append(self.ex_mu[-1] + upd)
+
+    def upd_ex_vfe(self):
+        def sqrd_err(err, sigma):
+            return np.power(err, 2) / sigma
+
+        ex_vfe = 0.5 * (sqrd_err(self.ex_e_z_0[-1], self.ex_s_z_0) +
+                     sqrd_err(self.ex_e_w_0[-1], self.ex_s_w_0))
+
+        self.ex_vfe.append(ex_vfe)
+
+    def exteroception(self):
+        # an agents performs exteroception
+        # that updated the desired temperature
+        # setting new set point for the underlying
+        # interoceptive inference
+
+        #   --> update errors
+        self.upd_ex_err_z_0()
+        self.upd_ex_err_w_0()
+
+        #  --> update recognition dynamics
+        self.upd_ex_mu_d1()
+        self.upd_ex_mu()
+
+        #  update free energy
+        self.upd_ex_vfe()
+
+        # TODO -- desired temperature should be set
+        # to the agent
+
+    def update_world(self):
+        # update world as in Interoceptive Agent
+        super().update_world()
+
+        # test -- only less luminance before temperature drop
+
+        # change in luminance starts before temperature drop
+        if self.time == 175:
+            luminance_change = -0.7
+        # and finishes after it
+        elif self.time == 225:
+            luminance_change = 0
+        else:
+            luminance_change = self.luminance_change[-1]
+
+        # relative_change = self.luminance_change[-1] - luminance_change
+        # self.luminance_relative_change.append(relative_change)
+
+        self.luminance_change.append(luminance_change)
+
+    def active_inference(self):
+        # exteroception first
+        self.exteroception()
+        # send down the prior about desired temperature
+        self.temp_desire.append(self.ex_mu[-1])
+        self.interoception()
+
+    def plot_results(self):
+        super().plot_results()
+
+        fig, ax = plt.subplots(4, 1, constrained_layout=True)
+
+        timeline = [s * self.dt for s in range(self.steps)]
+
+        # change in light
+        ax[0].plot(timeline, self.luminance_change[1:])
+        ax[0].set_title('Luminance change')
+
+        ax[1].plot(timeline, self.ex_mu[1:])
+        ax[1].plot(timeline, self.ex_mu_d1[1:])
+        ax[1].set_title('mu over time (inferred desired temperature)')
+        ax[1].legend(['mu', 'mu\''], loc='upper right')
+
+        ax[2].plot(timeline, self.ex_vfe)
+        ax[2].set_title('Exteroception VFE')
+        ax[2].set_ylim(-0.1, 500)
+
+        ax[3].plot(timeline, self.ex_e_z_0)
+        ax[3].plot(timeline, self.ex_e_w_0)
+        ax[3].set_ylim(-10, 10)
+        ax[3].set_title('Exteroception error')
+        ax[3].legend(['e_z_0', 'e_w_0', ], loc='upper right')
+
+        plt.show()
+
