@@ -10,6 +10,8 @@ def get_noise():
 
 
 class InteroceptiveAgent:
+    """Interoceptive agent that acts upon the interoceptive
+       information only (temperature and temperature change)""" 
 
     def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1,
                  action_bound=5.8, temp_const_change_initial=0,
@@ -293,6 +295,8 @@ class InteroceptiveAgent:
 
 
 class MockExteroceptiveAgent(InteroceptiveAgent):
+    """Proof of concept of the exteroceptive agent:
+       desired temperature is set directly"""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -314,6 +318,8 @@ class MockExteroceptiveAgent(InteroceptiveAgent):
 
 
 class ExteroceptiveAgent(InteroceptiveAgent):
+    """Exteroceptive agent that infers the desired temperature
+       and passes it down to the interoceptive layer"""
 
     def __init__(self, ex_s_z_0=0.01, ex_s_w_0=100000, **kwargs):
         # variance is set to be very high for internal model
@@ -388,7 +394,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
 
     def exteroception(self):
         # an agents performs exteroception
-        # that updated the desired temperature
+        # that updates the desired temperature
         # setting new set point for the underlying
         # interoceptive inference
 
@@ -403,34 +409,32 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         #  update free energy
         self.upd_ex_vfe()
 
-        # TODO -- desired temperature should be set
-        # to the agent
-
     def update_world(self):
         # update world as in Interoceptive Agent
         super().update_world()
 
         # test -- only less luminance before temperature drop
+        # TODO change the luminance corresponding to the change
+        # of temperature over the whole time line
 
-        # change in luminance starts before temperature drop
+        # change in luminance starts before the temperature drop
         if self.time == 175:
             luminance_change = -0.7
-        # and finishes after it
+        # and finishes during it
         elif self.time == 225:
             luminance_change = 0
         else:
             luminance_change = self.luminance_change[-1]
-
-        # relative_change = self.luminance_change[-1] - luminance_change
-        # self.luminance_relative_change.append(relative_change)
 
         self.luminance_change.append(luminance_change)
 
     def active_inference(self):
         # exteroception first
         self.exteroception()
-        # send down the prior about desired temperature
+        # pass the prior about desired temperature to the interoception
+        # generative model
         self.temp_desire.append(self.ex_mu[-1])
+        # then perform interoception
         self.interoception()
 
     def plot_results(self):
