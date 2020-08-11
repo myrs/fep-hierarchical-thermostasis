@@ -58,7 +58,7 @@ For now the project can be run using python interactive console `python3` (`ipyt
 
 Run `ipython3` and then execute the following lines to see the results of a simulation of the interoceptive thermostasis agent:
 ```
-from simple_thermostat_agent import *
+from thermostatis_agent import *
 # initialize Agent's world
 ia = InteroceptiveAgent()
 # run a simulation
