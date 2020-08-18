@@ -11,7 +11,7 @@ def get_noise():
 
 class InteroceptiveAgent:
     """Interoceptive agent that acts upon the interoceptive
-       information only (temperature and temperature change)""" 
+       information only (temperature and temperature change)"""
 
     def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1,
                  action_bound=5.8, temp_const_change_initial=0,
@@ -175,8 +175,10 @@ class InteroceptiveAgent:
         def sqrd_err(err, sigma):
             return np.power(err, 2) / sigma
 
-        vfe = 0.5 * (sqrd_err(self.e_z_0[-1], self.s_z_0) + sqrd_err(self.e_z_1[-1], self.s_z_1) +
-                     sqrd_err(self.e_w_0[-1], self.s_w_0) + sqrd_err(self.e_w_1[-1], self.s_w_1))
+        vfe = 0.5 * (sqrd_err(self.e_z_0[-1], self.s_z_0) +
+                     sqrd_err(self.e_z_1[-1], self.s_z_1) +
+                     sqrd_err(self.e_w_0[-1], self.s_w_0) +
+                     sqrd_err(self.e_w_1[-1], self.s_w_1))
 
         self.vfe.append(vfe)
 
@@ -193,6 +195,10 @@ class InteroceptiveAgent:
 
         # update action
         self.action.append(action)
+
+    def upd_no_action(self):
+        # if agent is not acting update it's variables anyway
+        self.action.append(self.action[-1])
 
     def interoception(self):
         # update interoception
@@ -288,8 +294,7 @@ class InteroceptiveAgent:
                 self.upd_action()
 
             else:
-                # if agent is not acting update it's variables anyway
-                self.action.append(self.action[-1])
+                self.upd_no_action()
 
         self.plot_results()
 
@@ -388,7 +393,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
             return np.power(err, 2) / sigma
 
         ex_vfe = 0.5 * (sqrd_err(self.ex_e_z_0[-1], self.ex_s_z_0) +
-                     sqrd_err(self.ex_e_w_0[-1], self.ex_s_w_0))
+                        sqrd_err(self.ex_e_w_0[-1], self.ex_s_w_0))
 
         self.ex_vfe.append(ex_vfe)
 
@@ -418,13 +423,10 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         # of temperature over the whole time line
 
         # change in luminance starts before the temperature drop
-        if self.time == 175:
+        if self.time >= 175 and self.time <= 225:
             luminance_change = -0.7
-        # and finishes during it
-        elif self.time == 225:
-            luminance_change = 0
         else:
-            luminance_change = self.luminance_change[-1]
+            luminance_change = 0
 
         self.luminance_change.append(luminance_change)
 
@@ -465,3 +467,164 @@ class ExteroceptiveAgent(InteroceptiveAgent):
 
         plt.show()
 
+
+class ActiveExteroception(ExteroceptiveAgent):
+    """An agent now lives in the world where it can act
+       In this world an agent can move up and down.
+       Where moving up increases the amount of light 
+       and, therefore, the temperature,
+       while moving down has the contrary effect.
+
+       The generative model of interoception is re-used for
+       exteroceptive active inference. 
+
+       As a result, an agent can both regulate it's temperature
+       interoceptive and exteroceptively. At the same time,
+       the generative dynamic, specifying a settling point resides on a level
+       above. On a next level of the hierarchy the desired temperature is inferred."""
+
+    def __init__(self, aex_s_z_0=0.1, aex_s_w_0=0.1, aex_s_w_1=0.1,
+                 aex_action_bound=0.5,
+                 **kwargs):
+        super().__init__()
+
+        self.learn_r_aex = self.learn_r
+        # self.learn_r_aex = 0.01
+
+        # sigma (variances)
+        self.aex_s_z_0 = aex_s_z_0
+        self.aex_s_w_0 = aex_s_w_0
+        self.aex_s_w_1 = aex_s_w_1
+
+        # action bound
+        self.aex_action_bound = aex_action_bound
+
+    def reset(self):
+        super().reset()
+
+        # active exteroceptive errors
+        self.aex_e_z_0 = []
+
+        # variational free energy
+        self.aex_vfe = []
+
+        # action
+        self.aex_action = [0]
+
+    def update_world(self):
+        super().update_world()
+
+        # luminance change is updated with action
+        # changing the current luminance change
+
+        self.luminance_change[-1] += self.aex_action[-1]
+        # TEST - eliminate simulated luminance change
+        # self.luminance_change[-1] = self.aex_action[-1]
+
+    def upd_temp_change(self):
+        # for this simple agent temp_change is just action
+        # update temperature by constant (e.g. world is heating constantly)
+        upd = self.temp_const_change[-1]
+        upd += self.action[-1]
+        upd += -1 * self.luminance_change[-1] / 1.0
+
+        self.temp_change.append(upd)
+
+    def upd_aex_err_z_0(self):
+        # error between sensation and generated sensations
+        # is difference between sensed temperature change
+        # and the generation of this change (first derivative of mu)
+        self.aex_e_z_0.append(self.ex_sense[-1] + 1.0 * (self.mu_d1[-1]))
+
+    def upd_aex_vfe(self):
+        def sqrd_err(err, sigma):
+            return np.power(err, 2) / sigma
+
+        # vfe is very similar to interoception, but precision is set
+        # for exteroception case
+        aex_vfe = 0.5 * (sqrd_err(self.aex_e_z_0[-1], self.aex_s_z_0) +
+                         sqrd_err(self.e_w_0[-1], self.aex_s_w_0) +
+                         sqrd_err(self.e_w_1[-1], self.aex_s_w_1))
+
+        self.aex_vfe.append(aex_vfe)
+
+    def upd_action(self):
+        super().upd_action()
+        # sensation change over action is always 1
+        # TODO is error at 0 order enough or we need the first order?
+        upd = -self.learn_r_aex * 1 * (self.aex_e_z_0[-1] / self.aex_s_z_0)
+        upd *= self.dt
+        aex_action = self.aex_action[-1] + upd
+
+        # action must be bound by some plausible constraints
+        # e.g. can't move faster than some limit
+        if abs(aex_action) > self.aex_action_bound:
+            aex_action = np.sign(aex_action) * self.aex_action_bound
+
+        # update action
+        self.aex_action.append(aex_action)
+
+    def upd_no_action(self):
+        super().upd_no_action()
+        self.aex_action.append(self.aex_action[-1])
+
+    def active_exteroception(self):
+        # an agents performs action
+        # based on it's exteroceptive inference
+        # about how temperature change causes luminance change
+
+        #  update errors
+        self.upd_aex_err_z_0()
+
+        #  update free energy
+        self.upd_aex_vfe()
+
+    def active_inference(self):
+        # exteroception first
+        self.exteroception()
+        # pass the prior about desired temperature to the generative model
+
+        self.temp_desire.append(self.ex_mu[-1])
+        # TEST
+        # self.temp_desire.append(self.temp_viable_mean)
+
+        # then perform interoception
+        self.interoception()
+        # and active exteroception
+        self.active_exteroception()
+
+    def plot_results(self):
+        super().plot_results()
+
+        fig, ax = plt.subplots(5, 1, constrained_layout=True)
+
+        timeline = [s * self.dt for s in range(self.steps)]
+
+        # change in light
+        ax[0].plot(timeline, self.luminance_change[1:])
+        ax[0].set_title('Luminance change')
+
+        ax[1].plot(timeline, self.mu[1:])
+        ax[1].plot(timeline, self.mu_d1[1:])
+        ax[1].set_title('mu over time (inferred temperature)')
+        ax[1].legend(['mu', 'mu\''], loc='upper right')
+
+        ax[2].plot(timeline, self.aex_vfe)
+        ax[2].set_title('Active Exteroception VFE')
+        ax[2].set_ylim(-0.1, 500)
+
+        ax[3].plot(timeline, self.aex_e_z_0)
+        ax[3].plot(timeline, self.e_w_0)
+        ax[3].plot(timeline, self.e_w_1)
+        ax[3].set_ylim(-10, 10)
+        ax[3].set_title('Exteroception and model error')
+        ax[3].legend(['e_z_0', 'e_w_0', 'e_w_1'], loc='upper right')
+
+        ax[4].plot(timeline, self.temp_const_change[1:])
+        ax[4].plot(timeline, self.aex_action[1:])
+        diff = np.array(self.temp_const_change[1:]) + np.array(self.aex_action[1:])
+        ax[4].plot(timeline, diff, lw=0.75, ls='--')
+        ax[4].legend(['luminance change', 'action', 'diff'], loc='upper right')
+        ax[4].set_title('Luminance change and action')
+
+        plt.show()
