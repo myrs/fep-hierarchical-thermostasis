@@ -484,7 +484,7 @@ class ActiveExteroception(ExteroceptiveAgent):
        above. On a next level of the hierarchy the desired temperature is inferred."""
 
     def __init__(self, aex_s_z_0=0.1, aex_s_w_0=0.1, aex_s_w_1=0.1,
-                 aex_action_bound=0.5,
+                 aex_action_bound=0.5, supress_action=False,
                  **kwargs):
         super().__init__()
 
@@ -499,14 +499,14 @@ class ActiveExteroception(ExteroceptiveAgent):
         # action bound
         self.aex_action_bound = aex_action_bound
 
-        # prediction -- to be used in the next agent
-        self.luminance_prediction = [0]
+
+        self.supress_action = supress_action
 
     def reset(self):
         super().reset()
 
         # active exteroceptive errors
-        self.aex_e_z_0 = []
+        self.aex_e_z_0 = [0]
 
         # variational free energy
         self.aex_vfe = []
@@ -514,45 +514,50 @@ class ActiveExteroception(ExteroceptiveAgent):
         # action
         self.aex_action = [0]
 
-        self.prediction = 0
+        # exteroceptive prediction
+        self.prediction = [0]
 
     def update_world(self):
         super().update_world()
 
         # luminance change is updated with action
         # changing the current luminance change
+        if not self.supress_action:
+            self.luminance_change[-1] += self.aex_action[-1]
 
-        self.luminance_change[-1] += self.aex_action[-1]
         # TEST - eliminate simulated luminance change
         # self.luminance_change[-1] = self.aex_action[-1]
 
     def upd_temp_change(self):
         # for this simple agent temp_change is just action
         # update temperature by constant (e.g. world is heating constantly)
-        upd = self.temp_const_change[-1]
-        upd += self.action[-1]
-        upd += -1 * self.luminance_change[-1] / 1.0
+        super().upd_temp_change()
 
-        self.temp_change.append(upd)
+        if not self.supress_action:
+            self.temp_change[-1] += -1 * self.luminance_change[-1] / 1.0
 
     def upd_ex_err_z_0(self):
         # the way exteroceptive error is calculated needs to be changed
-        # now predicted luminance from the lower level
-        # needs to be subtracted
-        # as it is already explained on a lower level
         self.ex_e_z_0.append(self.ex_sense[-1]
                              + 0.1 * (self.ex_mu[-1] - 30)
-                             - self.aex_action[-1])
+                             + self.aex_e_z_0[-1])
+
+        # prediction is what was not explained by this level
+        prediction = self.ex_sense[-1] + self.ex_e_z_0[-1] - self.aex_e_z_0[-1]
+        self.prediction.append(prediction)
+        
+        if self.time % 10:
+            print(f'{self.time:4} not explained: {prediction}')
 
     def upd_aex_err_z_0(self):
         # error between sensation and generated sensations
         # is difference between sensed temperature change
         # and the generation of this change (first derivative of mu)
 
-        # prediction will be send to a higher level
-        # in order to know how much is already explained here
-        self.luminance_prediction.append(1.0 * (self.mu_d1[-1]))
-        self.aex_e_z_0.append(self.ex_sense[-1] + self.luminance_prediction[-1])
+        # self.aex_e_z_0.append(self.ex_sense[-1] + 1.0 * (self.mu_d1[-1]))
+        # error is how much the prediction is different from what I'm getting
+        # what was not explained by this prediction
+        self.aex_e_z_0.append(self.prediction[-1] + 1.0 * (self.mu_d1[-1]))
 
     def upd_aex_vfe(self):
         def sqrd_err(err, sigma):
@@ -614,36 +619,38 @@ class ActiveExteroception(ExteroceptiveAgent):
     def plot_results(self):
         super().plot_results()
 
-        fig, ax = plt.subplots(5, 1, constrained_layout=True)
+        fig, ax = plt.subplots(3, 2, constrained_layout=True)
 
         timeline = [s * self.dt for s in range(self.steps)]
 
         # change in light
-        ax[0].plot(timeline, self.luminance_change[1:])
-        ax[0].plot(timeline, self.luminance_prediction[1:])
-        ax[0].set_title('Luminance change')
+        ax[0][0].plot(timeline, self.luminance_change[1:])
+        ax[0][0].set_title('Luminance change')
 
-        ax[1].plot(timeline, self.mu[1:])
-        ax[1].plot(timeline, self.mu_d1[1:])
-        ax[1].set_title('mu over time (inferred temperature)')
-        ax[1].legend(['mu', 'mu\''], loc='upper right')
+        ax[1][0].plot(timeline, self.mu[1:])
+        ax[1][0].plot(timeline, self.mu_d1[1:])
+        ax[1][0].set_title('mu over time (inferred temperature)')
+        ax[1][0].legend(['mu', 'mu\''], loc='upper right')
 
-        ax[2].plot(timeline, self.aex_vfe)
-        ax[2].set_title('Active Exteroception VFE')
-        ax[2].set_ylim(-0.1, 500)
+        ax[2][0].plot(timeline, self.aex_vfe)
+        ax[2][0].set_title('Active Exteroception VFE')
+        ax[2][0].set_ylim(-0.1, 500)
 
-        ax[3].plot(timeline, self.aex_e_z_0)
-        ax[3].plot(timeline, self.e_w_0)
-        ax[3].plot(timeline, self.e_w_1)
-        ax[3].set_ylim(-10, 10)
-        ax[3].set_title('Exteroception and model error')
-        ax[3].legend(['e_z_0', 'e_w_0', 'e_w_1'], loc='upper right')
+        ax[0][1].plot(timeline, self.aex_e_z_0[1:])
+        ax[0][1].plot(timeline, self.e_w_0)
+        ax[0][1].plot(timeline, self.e_w_1)
+        ax[0][1].set_ylim(-10, 10)
+        ax[0][1].set_title('Exteroception and model error')
+        ax[0][1].legend(['e_z_0', 'e_w_0', 'e_w_1'], loc='upper right')
 
-        ax[4].plot(timeline, self.temp_const_change[1:])
-        ax[4].plot(timeline, self.aex_action[1:])
+        ax[1][1].plot(timeline, self.temp_const_change[1:])
+        ax[1][1].plot(timeline, self.aex_action[1:])
         diff = np.array(self.temp_const_change[1:]) + np.array(self.aex_action[1:])
-        ax[4].plot(timeline, diff, lw=0.75, ls='--')
-        ax[4].legend(['luminance change', 'action', 'diff'], loc='upper right')
-        ax[4].set_title('Luminance change and action')
+        ax[1][1].plot(timeline, diff, lw=0.75, ls='--')
+        ax[1][1].legend(['luminance change', 'action', 'diff'], loc='upper right')
+        ax[1][1].set_title('Luminance change and action')
+
+        ax[2][1].plot(timeline, self.prediction[1:])
+        ax[2][1].set_title('Exteroceptive prediction and inter-layer errors')
 
         plt.show()
