@@ -499,6 +499,9 @@ class ActiveExteroception(ExteroceptiveAgent):
         # action bound
         self.aex_action_bound = aex_action_bound
 
+        # prediction -- to be used in the next agent
+        self.luminance_prediction = [0]
+
     def reset(self):
         super().reset()
 
@@ -530,11 +533,25 @@ class ActiveExteroception(ExteroceptiveAgent):
 
         self.temp_change.append(upd)
 
+    def upd_ex_err_z_0(self):
+        # the way exteroceptive error is calculated needs to be changed
+        # now predicted luminance from the lower level
+        # needs to be subtracted
+        # as it is already explained on a lower level
+
+        self.ex_e_z_0.append(self.ex_sense[-1]
+                             + 0.1 * (self.ex_mu[-1] - 30)
+                             + self.luminance_prediction[-1])
+
     def upd_aex_err_z_0(self):
         # error between sensation and generated sensations
         # is difference between sensed temperature change
         # and the generation of this change (first derivative of mu)
-        self.aex_e_z_0.append(self.ex_sense[-1] + 1.0 * (self.mu_d1[-1]))
+
+        # prediction will be send to a higher level
+        # in order to know how much is already explained here
+        self.luminance_prediction.append(1.0 * (self.mu_d1[-1]))
+        self.aex_e_z_0.append(self.ex_sense[-1] + self.luminance_prediction[-1])
 
     def upd_aex_vfe(self):
         def sqrd_err(err, sigma):
@@ -573,7 +590,7 @@ class ActiveExteroception(ExteroceptiveAgent):
         # based on it's exteroceptive inference
         # about how temperature change causes luminance change
 
-        #  update errors
+        # #  update errors
         self.upd_aex_err_z_0()
 
         #  update free energy
@@ -602,6 +619,7 @@ class ActiveExteroception(ExteroceptiveAgent):
 
         # change in light
         ax[0].plot(timeline, self.luminance_change[1:])
+        ax[0].plot(timeline, self.luminance_prediction[1:])
         ax[0].set_title('Luminance change')
 
         ax[1].plot(timeline, self.mu[1:])
