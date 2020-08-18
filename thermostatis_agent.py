@@ -514,6 +514,8 @@ class ActiveExteroception(ExteroceptiveAgent):
         # action
         self.aex_action = [0]
 
+        self.prediction = 0
+
     def update_world(self):
         super().update_world()
 
@@ -538,10 +540,9 @@ class ActiveExteroception(ExteroceptiveAgent):
         # now predicted luminance from the lower level
         # needs to be subtracted
         # as it is already explained on a lower level
-
         self.ex_e_z_0.append(self.ex_sense[-1]
                              + 0.1 * (self.ex_mu[-1] - 30)
-                             + self.luminance_prediction[-1])
+                             - self.aex_action[-1])
 
     def upd_aex_err_z_0(self):
         # error between sensation and generated sensations
