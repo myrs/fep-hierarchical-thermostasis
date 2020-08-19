@@ -513,8 +513,9 @@ class ActiveExteroception(ExteroceptiveAgent):
         # action
         self.aex_action = [0]
 
-        # exteroceptive prediction
-        self.prediction = [0]
+        # TODO for prediction
+        # # exteroceptive prediction
+        # self.prediction = [0]
 
     def update_world(self):
         super().update_world()
@@ -652,7 +653,8 @@ class ActiveExteroception(ExteroceptiveAgent):
         ax[1][1].legend(['luminance change', 'action', 'diff'], loc='upper right')
         ax[1][1].set_title('Luminance change and action')
 
-        ax[2][1].plot(timeline, self.prediction[1:])
-        ax[2][1].set_title('Exteroceptive prediction and inter-layer errors')
+        # TODO for prediction
+        # ax[2][1].plot(timeline, self.prediction[1:])
+        # ax[2][1].set_title('Exteroceptive prediction and inter-layer errors')
 
         plt.show()
