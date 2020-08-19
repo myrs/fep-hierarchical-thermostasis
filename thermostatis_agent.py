@@ -499,7 +499,6 @@ class ActiveExteroception(ExteroceptiveAgent):
         # action bound
         self.aex_action_bound = aex_action_bound
 
-
         self.supress_action = supress_action
 
     def reset(self):
@@ -538,26 +537,29 @@ class ActiveExteroception(ExteroceptiveAgent):
 
     def upd_ex_err_z_0(self):
         # the way exteroceptive error is calculated needs to be changed
-        self.ex_e_z_0.append(self.ex_sense[-1]
-                             + 0.1 * (self.ex_mu[-1] - 30)
-                             + self.aex_e_z_0[-1])
+        # if error from the lower level is to be included
+        self.ex_e_z_0.append(self.ex_sense[-1] - 0.1 * (-self.ex_mu[-1] + 30))
 
-        # prediction is what was not explained by this level
-        prediction = self.ex_sense[-1] + self.ex_e_z_0[-1] - self.aex_e_z_0[-1]
-        self.prediction.append(prediction)
-        
-        if self.time % 10:
-            print(f'{self.time:4} not explained: {prediction}')
+        # TODO attempt to include error from lower level -- not really working for now
+        # self.ex_e_z_0.append(self.ex_sense[-1]
+        #                      + 0.1 * (self.ex_mu[-1] - 30)
+        #                      + self.aex_e_z_0[-1])
+        # prediction = self.ex_sense[-1] + self.ex_e_z_0[-1] - self.aex_e_z_0[-1]
+        # self.prediction.append(prediction)
+        # if self.time % 10:
+        #     print(f'{self.time:4} not explained: {prediction}')
 
     def upd_aex_err_z_0(self):
         # error between sensation and generated sensations
         # is difference between sensed temperature change
         # and the generation of this change (first derivative of mu)
+        self.aex_e_z_0.append(self.ex_sense[-1] - -1.0 * (self.mu_d1[-1]))
 
-        # self.aex_e_z_0.append(self.ex_sense[-1] + 1.0 * (self.mu_d1[-1]))
+        # TODO attempt to add predictions from the higher level
+        #      not really working for now.
         # error is how much the prediction is different from what I'm getting
         # what was not explained by this prediction
-        self.aex_e_z_0.append(self.prediction[-1] + 1.0 * (self.mu_d1[-1]))
+        # self.aex_e_z_0.append(self.prediction[-1] + 1.0 * (self.mu_d1[-1]))
 
     def upd_aex_vfe(self):
         def sqrd_err(err, sigma):
