@@ -183,6 +183,7 @@ class InteroceptiveAgent:
         self.vfe.append(vfe)
 
     def upd_action(self):
+        # TODO action is noisy! Add noise here but not forget about integration
         # sensation change over action is always 1
         upd = -self.learn_r_a * 1 * (self.e_z_1[-1] / self.s_z_1)
         upd *= self.dt
@@ -365,7 +366,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
 
     def upd_ex_err_z_0(self):
         # error between sensation and generated sensations
-        self.ex_e_z_0.append(self.ex_sense[-1] + 0.1 * (self.ex_mu[-1] - 30))
+        self.ex_e_z_0.append(self.ex_sense[-1] - 0.1 * (-self.ex_mu[-1] + 30))
 
     def upd_ex_err_w_0(self):
         # error between model and generation of model
@@ -506,17 +507,13 @@ class ActiveExteroception(ExteroceptiveAgent):
         super().reset()
 
         # active exteroceptive errors
-        self.aex_e_z_0 = [0]
+        self.aex_e_z_0 = []
 
         # variational free energy
         self.aex_vfe = []
 
         # action
         self.aex_action = [0]
-
-        # TODO for prediction
-        # # exteroceptive prediction
-        self.prediction = [0]
 
     def update_world(self):
         super().update_world()
@@ -526,9 +523,6 @@ class ActiveExteroception(ExteroceptiveAgent):
         if not self.supress_action:
             self.luminance_change[-1] += self.aex_action[-1]
 
-        # TEST - eliminate simulated luminance change
-        # self.luminance_change[-1] = self.aex_action[-1]
-
     def upd_temp_change(self):
         # for this simple agent temp_change is just action
         # update temperature by constant (e.g. world is heating constantly)
@@ -537,31 +531,14 @@ class ActiveExteroception(ExteroceptiveAgent):
         if not self.supress_action:
             self.temp_change[-1] += -1 * self.aex_action[-1] / 1.0
 
-    def upd_ex_err_z_0(self):
-        # the way exteroceptive error is calculated needs to be changed
-        # if error from the lower level is to be included
-        self.ex_e_z_0.append(self.ex_sense[-1] - 0.1 * (-self.ex_mu[-1] + 30))
-
-        # TODO attempt to include error from lower level -- not really working for now
-        # self.ex_e_z_0.append(self.ex_sense[-1]
-        #                      + 0.1 * (self.ex_mu[-1] - 30)
-        #                      + self.aex_e_z_0[-1])
-        # prediction = self.ex_sense[-1] + self.ex_e_z_0[-1] - self.aex_e_z_0[-1]
-        # self.prediction.append(prediction)
-        # if self.time % 10:
-        #     print(f'{self.time:4} not explained: {prediction}')
-
     def upd_aex_err_z_0(self):
         # error between sensation and generated sensations
         # is difference between sensed temperature change
         # and the generation of this change (first derivative of mu)
+        # TODO the only thing this can do is reduce temperature change to 0
+        # it won't bring to the desired temperature
+        # because there is not dynamics to specify it
         self.aex_e_z_0.append(self.ex_sense[-1] - -1.0 * (self.mu_d1[-1]))
-
-        # TODO attempt to add predictions from the higher level
-        #      not really working for now.
-        # error is how much the prediction is different from what I'm getting
-        # what was not explained by this prediction
-        # self.aex_e_z_0.append(self.prediction[-1] + 1.0 * (self.mu_d1[-1]))
 
     def upd_aex_vfe(self):
         def sqrd_err(err, sigma):
@@ -578,7 +555,6 @@ class ActiveExteroception(ExteroceptiveAgent):
     def upd_action(self):
         super().upd_action()
         # sensation change over action is always 1
-        # TODO is error at 0 order enough or we need the first order?
         upd = -self.learn_r_aex * 1 * (self.aex_e_z_0[-1] / self.aex_s_z_0)
         upd *= self.dt
         aex_action = self.aex_action[-1] + upd
@@ -600,10 +576,10 @@ class ActiveExteroception(ExteroceptiveAgent):
         # based on it's exteroceptive inference
         # about how temperature change causes luminance change
 
-        # #  update errors
+        # update errors
         self.upd_aex_err_z_0()
 
-        #  update free energy
+        # update free energy
         self.upd_aex_vfe()
 
     def active_inference(self):
@@ -641,7 +617,7 @@ class ActiveExteroception(ExteroceptiveAgent):
         ax[2][0].set_title('Active Exteroception VFE')
         ax[2][0].set_ylim(-0.1, 500)
 
-        ax[0][1].plot(timeline, self.aex_e_z_0[1:])
+        ax[0][1].plot(timeline, self.aex_e_z_0)
         ax[0][1].plot(timeline, self.e_w_0)
         ax[0][1].plot(timeline, self.e_w_1)
         ax[0][1].set_ylim(-10, 10)
@@ -655,8 +631,214 @@ class ActiveExteroception(ExteroceptiveAgent):
         ax[1][1].legend(['luminance change', 'action', 'diff'], loc='upper right')
         ax[1][1].set_title('Luminance change and action')
 
-        # TODO for prediction
-        # ax[2][1].plot(timeline, self.prediction[1:])
-        # ax[2][1].set_title('Exteroceptive prediction and inter-layer errors')
+        plt.show()
+
+
+class ProprioceptiveAgent(ActiveExteroception):
+    """An agent now has an actual proprioceptive model
+       and this model is recruited for the agent to actually
+       act on the environment
+
+       It is also show, that proprioceptive predictions about 
+       how much proprioceptive information can explain the change of light"""
+
+    def __init__(self, pr_s_z_0=0.01, pr_s_w_0=100000, learn_r_pr=None,
+                 pr_action_bound=10, supress_action=False, 
+                 supress_desired_temp_inference=False, **kwargs):
+        # variance is set to be very high for internal model
+        # as it does not matter in this case
+        super().__init__(**kwargs)
+
+        self.learn_r_pr = self.learn_r if learn_r_pr is None else learn_r_pr
+
+        # sigma (variances)
+        self.pr_s_z_0 = pr_s_z_0
+        self.pr_s_w_0 = pr_s_w_0
+
+        self.pr_action_bound = pr_action_bound
+        self.supress_action = supress_action
+        self.supress_desired_temp_inference = supress_desired_temp_inference
+
+    def reset(self):
+        super().reset()
+
+        # proprioceptive errors
+        self.pr_e_z_0 = []
+        self.pr_e_w_0 = []
+
+        # brain state mu
+        self.pr_mu = [0]
+        self.pr_mu_d1 = [0]
+
+        self.pr_action = [0]
+        self.pr_action_effect_on_luminance = []
+
+        # variational free energy
+        self.pr_vfe = []
+
+    def upd_pr_err_z_0(self):
+        # error between sensation and generated sensations
+        # what light change do I need to explain away
+        # how can I generate it with action (moving)
+
+        # light change i need to explain
+        light_change = 1 * (self.aex_e_z_0[-1] / self.aex_s_z_0)
+
+        # generative model is 10 velocities are needed to change the light by 1
+        # 1 velocity changes light by 0.1
+        # if I move upward the light will increase
+
+        self.pr_e_z_0.append(light_change + 0.1 * self.pr_mu[-1])
+
+    def upd_pr_err_w_0(self):
+        # error between model and generation of model
+        # here: model of dynamics at 1st derivative (inferred velocity)
+        # and it's generation for the 1st derivative (generated velocity)
+        self.pr_e_w_0.append(self.pr_mu_d1[-1] + self.pr_mu[-1])
+
+    def upd_pr_mu_d1(self):
+        upd = -self.learn_r_pr * (self.pr_e_w_0[-1] / self.pr_s_w_0)
+        upd *= self.dt
+
+        self.pr_mu_d1.append(self.pr_mu_d1[-1] + upd)
+
+    def upd_pr_mu(self):
+        upd = -self.learn_r_pr * \
+            (0.1 * self.pr_e_z_0[-1] / self.pr_s_z_0 +
+             self.pr_e_w_0[-1] / self.pr_s_w_0)
+        upd += self.pr_mu_d1[-2]
+        upd *= self.dt
+
+        self.pr_mu.append(self.pr_mu[-1] + upd)
+
+    def upd_pr_vfe(self):
+        def sqrd_err(err, sigma):
+            return np.power(err, 2) / sigma
+
+        pr_vfe = 0.5 * (sqrd_err(self.pr_e_z_0[-1], self.pr_s_z_0) +
+                        sqrd_err(self.pr_e_w_0[-1], self.pr_s_w_0))
+
+        self.pr_vfe.append(pr_vfe)
+
+    def upd_action(self):
+        # action of the ExteroceptiveAgent and not ActiveExteroceptive will be called!
+        # we need to override the ActiveExteroceptive one
+        ExteroceptiveAgent.upd_action(self)
+
+        # assume that agent can indicate the velocity directly (derivative is 0.1)
+        # TODO is it 0.1 or just 1?
+        upd = -self.learn_r_aex * 0.1 * (self.pr_e_z_0[-1] / self.pr_s_z_0)
+        upd *= self.dt
+        pr_action = self.pr_action[-1] + upd
+
+        # action must be bound by some plausible constraints
+        # e.g. can't move faster than some limit
+        if abs(pr_action) > self.pr_action_bound:
+            pr_action = np.sign(pr_action) * self.pr_action_bound
+
+        # update action
+        self.pr_action.append(pr_action)
+
+    def upd_no_action(self):
+        # no_action of the ExteroceptiveAgent and not ActiveExteroceptive will be called!
+        # we need to override the ActiveExteroceptive one
+        ExteroceptiveAgent.upd_no_action(self)
+        self.pr_action.append(self.pr_action[-1])
+
+    def proprioception(self):
+        #   --> update errors
+        self.upd_pr_err_z_0()
+        self.upd_pr_err_w_0()
+
+        #  --> update recognition dynamics
+        self.upd_pr_mu_d1()
+        self.upd_pr_mu()
+
+        #  update free energy
+        self.upd_pr_vfe()
+
+    def active_inference(self):
+        # exteroception first
+        self.exteroception()
+
+        # pass the prior about desired temperature to the generative model
+        if not self.supress_desired_temp_inference:
+            self.temp_desire.append(self.ex_mu[-1])
+        else:
+            self.temp_desire.append(self.temp_viable_mean)
+
+        # then perform interoception
+        self.interoception()
+        # and active exteroception
+        self.active_exteroception()
+        # and then proprioception (with the corresponding action)
+        self.proprioception()
+
+    def update_world(self):
+        # update_world of the ExteroceptiveAgent and not ActiveExteroceptive will be called!
+        # we need to override the ActiveExteroceptive one
+        ExteroceptiveAgent.update_world(self)
+
+        # luminance change is updated with action
+        # changing the current luminance change
+        if not self.supress_action:
+            # translate action to actual change of environment
+            # affect of action is translated to luminance change
+            # TODO action is noisy! Add noise here but not forget about integration
+            action_effect_on_luminance = self.pr_action[-1] * 0.1
+            self.pr_action_effect_on_luminance.append(action_effect_on_luminance)
+
+            self.luminance_change[-1] += action_effect_on_luminance
+
+    def upd_temp_change(self):
+        ExteroceptiveAgent.upd_temp_change(self)
+
+        if not self.supress_action:
+            # temperature changes depending on the actual action taken
+            # assumed relationship between luminance and temperature change is
+            # 1 : 1
+            self.temp_change[-1] += -1 * self.pr_action_effect_on_luminance[-1] / 1.0
+
+    def plot_results(self):
+        ExteroceptiveAgent.plot_results(self)
+
+        fig, ax = plt.subplots(3, 2, constrained_layout=True)
+
+        timeline = [s * self.dt for s in range(self.steps)]
+
+        # change in light
+        ax[0][0].plot(timeline, self.luminance_change[1:])
+        ax[0][0].set_title('Luminance change')
+
+        ax[1][0].plot(timeline, self.pr_mu[1:])
+        ax[1][0].plot(timeline, self.pr_mu_d1[1:])
+        ax[1][0].set_title('mu over time (inferred change in velocity)')
+        ax[1][0].legend(['mu', 'mu\''], loc='upper right')
+
+        ax[2][0].plot(timeline, self.aex_vfe)
+        ax[2][0].plot(timeline, self.pr_vfe)
+        ax[1][0].legend(['active exteroception', 'proprioception'], loc='upper right')
+        ax[2][0].set_title('Active Exteroception and proprioception VFE')
+        ax[2][0].set_ylim(-0.1, 500)
+
+        # ax[0][1].plot(timeline, self.aex_e_z_0)
+        # ax[0][1].plot(timeline, self.e_w_0)
+        # ax[0][1].plot(timeline, self.e_w_1)
+        # ax[0][1].set_ylim(-10, 10)
+        # ax[0][1].set_title('Exteroception and Proprioception errors')
+        # ax[0][1].legend(['e_z_0', 'e_w_0', 'e_w_1'], loc='upper right')
+
+        ax[0][1].plot(timeline, self.pr_e_z_0)
+        ax[0][1].plot(timeline, self.pr_e_w_0)
+        ax[0][1].set_ylim(-10, 10)
+        ax[0][1].set_title('Proprioception errors')
+        ax[0][1].legend(['e_z_0', 'e_w_0'], loc='upper right')
+
+        ax[1][1].plot(timeline, self.temp_change[1:])
+        ax[1][1].plot(timeline, self.pr_action[1:])
+        diff = np.array(self.temp_change[1:]) + np.array(self.pr_action[1:])
+        ax[1][1].plot(timeline, diff, lw=0.75, ls='--')
+        ax[1][1].legend(['luminance change', 'action', 'diff'], loc='upper right')
+        ax[1][1].set_title('Luminance change and action')
 
         plt.show()
