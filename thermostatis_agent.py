@@ -539,8 +539,7 @@ class ActiveExteroception(ExteroceptiveAgent):
     def upd_ex_err_z_0(self):
         # the way exteroceptive error is calculated needs to be changed
         # if error from the lower level is to be included
-        rest = self.ex_sense[-1] + -1.0 * (self.mu_d1[-1])
-        self.ex_e_z_0.append(rest - 0.1 * (-self.ex_mu[-1] + 30))
+        self.ex_e_z_0.append(self.ex_sense[-1] - 0.1 * (-self.ex_mu[-1] + 30))
 
         # TODO attempt to include error from lower level -- not really working for now
         # self.ex_e_z_0.append(self.ex_sense[-1]
@@ -555,8 +554,7 @@ class ActiveExteroception(ExteroceptiveAgent):
         # error between sensation and generated sensations
         # is difference between sensed temperature change
         # and the generation of this change (first derivative of mu)
-        rest = self.ex_sense[-1] + 0.1 * (-self.ex_mu[-1] + 30)
-        self.aex_e_z_0.append(rest - -1.0 * (self.mu_d1[-1]) )
+        self.aex_e_z_0.append(self.ex_sense[-1] - -1.0 * (self.mu_d1[-1]) )
 
         # TODO attempt to add predictions from the higher level
         #      not really working for now.
