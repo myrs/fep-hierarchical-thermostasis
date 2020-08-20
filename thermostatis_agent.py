@@ -22,14 +22,11 @@ class InteroceptiveAgent:
         self.s_w_0 = s_w_0
         self.s_w_1 = s_w_1
 
-        print('sss')
-
         # learning rate
         self.learn_r = learn_r
         self.learn_r_a = self.learn_r
         # 0.5 will produce too much noise
         self.dt = dt
-        print(dt)
         self.T0 = 30
         self.temp_viable_mean = 30
         self.temp_viable_range = temp_viable_range
@@ -277,7 +274,7 @@ class InteroceptiveAgent:
         plt.ion()
 
         self.steps = int(sim_time / self.dt)
-        print('Simulating %s steps', self.steps)
+        print(f'Simulating {self.steps} steps')
 
         for step in range(self.steps):
             self.time = int(step * self.dt)
@@ -558,7 +555,7 @@ class ActiveExteroception(ExteroceptiveAgent):
         # error between sensation and generated sensations
         # is difference between sensed temperature change
         # and the generation of this change (first derivative of mu)
-        self.aex_e_z_0.append(self.ex_sense[-1] - -1.0 * (self.mu_d1[-1]) )
+        self.aex_e_z_0.append(self.ex_sense[-1] - -1.0 * (self.mu_d1[-1]))
 
         # TODO attempt to add predictions from the higher level
         #      not really working for now.
