@@ -15,18 +15,21 @@ class InteroceptiveAgent:
 
     def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1,
                  action_bound=5.8, temp_const_change_initial=0,
-                 temp_viable_range=10):
+                 temp_viable_range=10, dt=0.1, learn_r=0.1):
         # sigma (variances)
         self.s_z_0 = s_z_0
         self.s_z_1 = s_z_1
         self.s_w_0 = s_w_0
         self.s_w_1 = s_w_1
 
+        print('sss')
+
         # learning rate
-        self.learn_r = 0.1
+        self.learn_r = learn_r
         self.learn_r_a = self.learn_r
         # 0.5 will produce too much noise
-        self.dt = 0.1
+        self.dt = dt
+        print(dt)
         self.T0 = 30
         self.temp_viable_mean = 30
         self.temp_viable_range = temp_viable_range
@@ -484,12 +487,12 @@ class ActiveExteroception(ExteroceptiveAgent):
        above. On a next level of the hierarchy the desired temperature is inferred."""
 
     def __init__(self, aex_s_z_0=0.1, aex_s_w_0=0.1, aex_s_w_1=0.1,
-                 aex_action_bound=0.5, supress_action=False,
+                 aex_action_bound=0.5, supress_action=False, learn_r_aex=None,
+                 supress_desired_temp_inference=False,
                  **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
 
-        self.learn_r_aex = self.learn_r
-        # self.learn_r_aex = 0.01
+        self.learn_r_aex = self.learn_r if learn_r_aex is None else learn_r_aex
 
         # sigma (variances)
         self.aex_s_z_0 = aex_s_z_0
@@ -500,6 +503,7 @@ class ActiveExteroception(ExteroceptiveAgent):
         self.aex_action_bound = aex_action_bound
 
         self.supress_action = supress_action
+        self.supress_desired_temp_inference = supress_desired_temp_inference
 
     def reset(self):
         super().reset()
@@ -515,7 +519,7 @@ class ActiveExteroception(ExteroceptiveAgent):
 
         # TODO for prediction
         # # exteroceptive prediction
-        # self.prediction = [0]
+        self.prediction = [0]
 
     def update_world(self):
         super().update_world()
@@ -534,7 +538,7 @@ class ActiveExteroception(ExteroceptiveAgent):
         super().upd_temp_change()
 
         if not self.supress_action:
-            self.temp_change[-1] += -1 * self.luminance_change[-1] / 1.0
+            self.temp_change[-1] += -1 * self.aex_action[-1] / 1.0
 
     def upd_ex_err_z_0(self):
         # the way exteroceptive error is calculated needs to be changed
@@ -608,11 +612,12 @@ class ActiveExteroception(ExteroceptiveAgent):
     def active_inference(self):
         # exteroception first
         self.exteroception()
-        # pass the prior about desired temperature to the generative model
 
-        self.temp_desire.append(self.ex_mu[-1])
-        # TEST
-        # self.temp_desire.append(self.temp_viable_mean)
+        # pass the prior about desired temperature to the generative model
+        if not self.supress_desired_temp_inference:
+            self.temp_desire.append(self.ex_mu[-1])
+        else:
+            self.temp_desire.append(self.temp_viable_mean)
 
         # then perform interoception
         self.interoception()
