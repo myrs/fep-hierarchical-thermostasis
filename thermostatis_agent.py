@@ -682,33 +682,49 @@ class ProprioceptiveAgent(ActiveExteroception):
         # how can I generate it with action (moving)
 
         # light change i need to explain
-        light_change = 1 * (self.aex_e_z_0[-1] / self.aex_s_z_0)
+        light_change_error = 1 * (self.aex_e_z_0[-1] / self.aex_s_z_0)
 
+        # light change error is a sensory prediction error
+        # that needs to be minimized by proprioceptive action
+        # when it's positive it means an agent needs to go down
+        # and vise versa
         # generative model is 10 velocities are needed to change the light by 1
         # 1 velocity changes light by 0.1
         # if I move upward the light will increase
-        self.pr_e_z_0.append(light_change - -0.1 * self.pr_mu[-1])
+        self.pr_e_z_0.append(light_change_error - -0.1 * self.pr_mu[-1])
+        # self.pr_e_z_0.append(light_change - -0.1 * self.pr_mu[-1])
 
     def upd_pr_err_w_0(self):
         # error between model and generation of model
         # here: model of dynamics at 1st derivative (inferred velocity)
         # and it's generation for the 1st derivative (generated velocity)
-        self.pr_e_w_0.append(self.pr_mu_d1[-1] + self.pr_mu[-1])
+        self.pr_e_w_0.append(self.pr_mu_d1[-1] - -self.pr_mu[-1])
 
+    def upd_aex_err_z_0(self):
+        # updated function for calculating
+        # the sensory prediction error on the active exteroception layer
+        # predictions about sensory data are dictated by the error
+        
+        predicted = self.ex_sense[-1] - 0.1 * (-self.ex_mu[-1] + 30)
+        self.aex_e_z_0.append(predicted - -1.0 * (self.mu_d1[-1]))
+        
     def upd_ex_err_z_0(self):
-        # the way exteroceptive error is calculated needs to be changed
-        # now predicted luminance from the lower level
-        # needs to be subtracted
-        # as it is already explained on a lower level
+        # updated function for calculating 
+        # the sensory prediction error on the desired temperature inference layer
+        # predictions from the proprioceptive layer are now 
+        # subtracted as they were already explain
 
         # how I believe proprioception explains the light change
-        # proprioception_prediction = -0.1 * self.pr_mu[-1]
-        proprioception_prediction = -0.1 * self.pr_mu[-1]
-        # proprioception_prediction = 0
+        # as I'm generating the movement inverse to light change
+        # it needs to be without minus
+        proprioception_prediction = 0.1 * self.pr_mu[-1]
 
+        # believe about how proprioception explains the light change
+        # is now integrated in the exteroception error
+        # on the layer inferring agent's desired temperature
         self.ex_e_z_0.append(self.ex_sense[-1]
-                             + 0.1 * (self.ex_mu[-1] - 30)
-                             + proprioception_prediction)
+                             - 0.1 * (-self.ex_mu[-1] + 30)
+                             - proprioception_prediction)
 
     def upd_pr_mu_d1(self):
         upd = -self.learn_r_pr * (self.pr_e_w_0[-1] / self.pr_s_w_0)
@@ -831,7 +847,7 @@ class ProprioceptiveAgent(ActiveExteroception):
 
         ax[2][0].plot(timeline, self.aex_vfe)
         ax[2][0].plot(timeline, self.pr_vfe)
-        ax[1][0].legend(['active exteroception', 'proprioception'], loc='upper right')
+        ax[2][0].legend(['active exteroception', 'proprioception'], loc='upper right')
         ax[2][0].set_title('Active Exteroception and proprioception VFE')
         ax[2][0].set_ylim(-0.1, 500)
 
@@ -852,7 +868,7 @@ class ProprioceptiveAgent(ActiveExteroception):
         ax[1][1].plot(timeline, self.pr_action[1:])
         diff = np.array(self.temp_change[1:]) + np.array(self.pr_action[1:])
         ax[1][1].plot(timeline, diff, lw=0.75, ls='--')
-        ax[1][1].legend(['luminance change', 'action', 'diff'], loc='upper right')
+        ax[1][1].legend(['temperature change', 'action', 'diff'], loc='upper right')
         ax[1][1].set_title('Luminance change and action')
 
         plt.show()
