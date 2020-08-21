@@ -687,14 +687,28 @@ class ProprioceptiveAgent(ActiveExteroception):
         # generative model is 10 velocities are needed to change the light by 1
         # 1 velocity changes light by 0.1
         # if I move upward the light will increase
-
-        self.pr_e_z_0.append(light_change + 0.1 * self.pr_mu[-1])
+        self.pr_e_z_0.append(light_change - -0.1 * self.pr_mu[-1])
 
     def upd_pr_err_w_0(self):
         # error between model and generation of model
         # here: model of dynamics at 1st derivative (inferred velocity)
         # and it's generation for the 1st derivative (generated velocity)
         self.pr_e_w_0.append(self.pr_mu_d1[-1] + self.pr_mu[-1])
+
+    def upd_ex_err_z_0(self):
+        # the way exteroceptive error is calculated needs to be changed
+        # now predicted luminance from the lower level
+        # needs to be subtracted
+        # as it is already explained on a lower level
+
+        # how I believe proprioception explains the light change
+        # proprioception_prediction = -0.1 * self.pr_mu[-1]
+        proprioception_prediction = -0.1 * self.pr_mu[-1]
+        # proprioception_prediction = 0
+
+        self.ex_e_z_0.append(self.ex_sense[-1]
+                             + 0.1 * (self.ex_mu[-1] - 30)
+                             + proprioception_prediction)
 
     def upd_pr_mu_d1(self):
         upd = -self.learn_r_pr * (self.pr_e_w_0[-1] / self.pr_s_w_0)
