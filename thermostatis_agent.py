@@ -647,17 +647,17 @@ class ActiveExteroception(ExteroceptiveAgent):
 
 class ProprioceptiveAgent(ActiveExteroception):
     """An agent now has an actual proprioceptive model
-       and this model is recruited for the agent to actually
+       and this model is recruited by the agent to actually
        act on the environment
 
-       It is also show, that proprioceptive predictions about 
-       how much proprioceptive information can explain the change of light"""
+       In this iteration of the agent it's also shown, 
+       how proprioceptive information can be used by agent
+       to predict how much of the observed change in light
+       is explained away by proprioceptive feeling"""
 
     def __init__(self, pr_s_z_0=0.01, pr_s_w_0=100000, learn_r_pr=None,
                  pr_action_bound=10, supress_action=False,
                  supress_desired_temp_inference=False, **kwargs):
-        # variance is set to be very high for internal model
-        # as it does not matter in this case
         super().__init__(**kwargs)
 
         self.learn_r_pr = self.learn_r if learn_r_pr is None else learn_r_pr
@@ -689,21 +689,22 @@ class ProprioceptiveAgent(ActiveExteroception):
 
     def upd_pr_err_z_0(self):
         # error between sensation and generated sensations
-        # what light change do I need to explain away
-        # how can I generate it with action (moving)
+        # how agent's proprioceptive sensation (e.g. velocity)
+        # explains the light change error
+        # the received from the higher level
 
-        # light change i need to explain
+        # light change that is needed to be explained 
+        # weighted by the variance of the error
+        # and transformed to 'units' of proprioception
+        # (in this case the transformation is 1:1)
         light_change_error = 1 * (self.aex_e_z_0[-1] / self.aex_s_z_0)
 
-        # light change error is a sensory prediction error
-        # that needs to be minimized by proprioceptive action
-        # when it's positive it means an agent needs to go down
-        # and vise versa
+        # agent believes that changing velocity by 10
+        # it can explain 10 units of light change error
         # generative model is 10 velocities are needed to change the light by 1
         # 1 velocity changes light by 0.1
         # if I move upward the light will increase
         self.pr_e_z_0.append(light_change_error - 0.1 * (-self.pr_mu[-1]))
-        # self.pr_e_z_0.append(light_change - -0.1 * self.pr_mu[-1])
 
     def upd_pr_err_w_0(self):
         # error between model and generation of model
@@ -725,12 +726,12 @@ class ProprioceptiveAgent(ActiveExteroception):
         # predictions from the proprioceptive layer are now
         # subtracted as they were already explain
 
-        # how I believe proprioception explains the light change
-        # as I'm generating the movement inverse to light change
+        # how an agent believes proprioception explains the light change
+        # as the movement generated is inverse to the light change,
         # it needs to be without minus
         proprioception_prediction = 0.1 * self.pr_mu[-1]
 
-        # believe about how proprioception explains the light change
+        # belief about how proprioception explains the light change
         # is now integrated in the exteroception error
         # on the layer inferring agent's desired temperature
         self.ex_e_z_0.append(self.ex_sense[-1]
@@ -768,7 +769,7 @@ class ProprioceptiveAgent(ActiveExteroception):
 
         # assume that agent can indicate the velocity directly (derivative is 0.1)
         # TODO is it 0.1 or just 1?
-        upd = -self.learn_r_aex * 0.1 * (self.pr_e_z_0[-1] / self.pr_s_z_0)
+        upd = -self.learn_r_pr * 0.1 * (self.pr_e_z_0[-1] / self.pr_s_z_0)
         upd *= self.dt
         pr_action = self.pr_action[-1] + upd
 
@@ -870,18 +871,18 @@ class ProprioceptiveAgent(ActiveExteroception):
         ax[2][0].set_title('Active Exteroception and proprioception VFE')
         ax[2][0].set_ylim(-0.1, 500)
 
-        # ax[0][1].plot(timeline, self.aex_e_z_0)
         # ax[0][1].plot(timeline, self.e_w_0)
         # ax[0][1].plot(timeline, self.e_w_1)
         # ax[0][1].set_ylim(-10, 10)
         # ax[0][1].set_title('Exteroception and Proprioception errors')
         # ax[0][1].legend(['e_z_0', 'e_w_0', 'e_w_1'], loc='upper right')
 
+        ax[0][1].plot(timeline, self.aex_e_z_0)
         ax[0][1].plot(timeline, self.pr_e_z_0)
         ax[0][1].plot(timeline, self.pr_e_w_0)
         ax[0][1].set_ylim(-10, 10)
-        ax[0][1].set_title('Proprioception errors')
-        ax[0][1].legend(['e_z_0', 'e_w_0'], loc='upper right')
+        ax[0][1].set_title('Exteroception and proprioception errors')
+        ax[0][1].legend(['aex_e_z_0', 'e_z_0', 'e_w_0'], loc='upper right')
 
         ax[1][1].plot(timeline, self.temp_change[1:])
         ax[1][1].plot(timeline, self.pr_action[1:])
