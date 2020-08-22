@@ -97,3 +97,4 @@ ia.simulate_perception()
 ```
 
 To see results for the exteroceptive agent, change `InteroceptiveAgent` to `ExteroceptiveAgent`.
+To see results for the proprioceptive agent, change `InteroceptiveAgent` to `ProprioceptiveAgent`.
