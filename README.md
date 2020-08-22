@@ -63,6 +63,10 @@ As a solution to this problem we propose to give an agent a sense of propriocept
 #### Discussion
 While the proposed scheme works, it's not entirely clear why an agent produces small action even after the temperature change settles (after step 250). It seems like an agent's action update deviates from the proprioception (error) update. While proprioceptive sensory error is 0 and predicted by the proprioceptive layer change in light is 0 as well, an agent is performing a small amount of action. This action produces the change in light that is then explained by the level, inferring the desired temperature. While this change in temperature is effective counter-acted by interoceptive action, it seems it should not be there from in the first place. Next step would be to find why this effect appears and how it should be eliminated.
 
+![Figure 5.](images/action_error.png)
+
+*Figure 5. While there is not error in proprioceptive prediction, an agent is still acting. This produces the change in luminance (and, therefore, temperature) and makes the agent act interoceptively to maintain its temperature. This effect is undesirable and should should be solved*
+
 ### Next steps
 Further steps would include adding more layers of hierarchy to allow conditioned (aka Pavlovian) and goal-directed behaviour an allowing an agent to move in the environment in order to be more adaptive.
 
