@@ -837,12 +837,18 @@ class ProprioceptiveAgent(ActiveExteroception):
             # temperature changes depending on the actual action taken
             # assumed relationship between luminance and temperature change is
             # 1 : 1
+
+            # new way to update -- update constant temperature change
+            # this the update represents an agent moving to a place in water
+            # where constant temperature change is different
             action_2 = self.pr_action_effect_on_luminance[-2] if len(
                 self.pr_action_effect_on_luminance) > 1 else 0
 
             action = self.pr_action_effect_on_luminance[-1] - action_2
             self.temp_const_change[-1] += -action / 1.0
 
+            # old way to update temperature change -- updating temperature directly
+            # but this way constant temperature change remains the same
             # self.temp_change[-1] += -1 * self.pr_action_effect_on_luminance[-1] / 1.0
 
         upd = self.action[-1]
@@ -870,12 +876,6 @@ class ProprioceptiveAgent(ActiveExteroception):
         ax[2][0].legend(['active exteroception', 'proprioception'], loc='upper right')
         ax[2][0].set_title('Active Exteroception and proprioception VFE')
         ax[2][0].set_ylim(-0.1, 500)
-
-        # ax[0][1].plot(timeline, self.e_w_0)
-        # ax[0][1].plot(timeline, self.e_w_1)
-        # ax[0][1].set_ylim(-10, 10)
-        # ax[0][1].set_title('Exteroception and Proprioception errors')
-        # ax[0][1].legend(['e_z_0', 'e_w_0', 'e_w_1'], loc='upper right')
 
         ax[0][1].plot(timeline, self.aex_e_z_0)
         ax[0][1].plot(timeline, self.pr_e_z_0)
