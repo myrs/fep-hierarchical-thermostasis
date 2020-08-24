@@ -25,7 +25,7 @@ Initial temperature of an agent is set to the mean of the viable range (30 °C).
 -6, & step > 200 \leq 250 \\
 0, & step > 250
 \end{matrix}
-\right.">
+\right."> (1)
 
 After timestep 250 and agent is given a cool down time (temperature change is 0) till the end of the simulation at the time step 300.
 
@@ -37,7 +37,7 @@ We then construct an agent's generative model, where <img src="https://latex.cod
 
 <img src="https://latex.codecogs.com/png.latex?%5Cfrac%7Bd%5Cmu%7D%7Bdt%7D%20%3D%20f%28%5Cmu%29%2C%20f%28%5Cmu%29%20%3D%20-%5Cmu%20&plus;%20T_%7Bdesire%7D" alt="\frac{d\mu}{dt} = f(\mu), f(\mu) = -\mu + T_{desire}">
 
-For now it is logical to assume that the desired temperature is static and set to the mean of the viable interval (<img src="https://latex.codecogs.com/png.latex?%5Cinline%20T_%7Bdesire%7D%20%3D%2030" alt="T_{desire} = 30">) but for the sake of the further extensions of an agent we should remember that <img="https://latex.codecogs.com/png.latex?%5Cinline%20T_%7Bdesire%7D" alt="T_{desire}"> can take any values. The generative model up to second order can be written as:
+For now it is logical to assume that the desired temperature is static and set to the mean of the viable interval (i.e. <img src="https://latex.codecogs.com/png.latex?%5Cinline%20T_%7Bdesire%7D%20%3D%2030" alt="T_{desire} = 30">) but for the sake of the further extensions of an agent we should remember that <img src="https://latex.codecogs.com/png.latex?%5Cinline%20T_%7Bdesire%7D" alt="T_{desire}"> can take any values. The generative model up to second order can be written then as:
 
 <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cbegin%7Bmatrix%7D%20%7B%5Cmu%7D%27%20%3D%20-%5Cmu%20&plus;%20T_%7Bdesire%7D%20&plus;%20w%20%5C%5C%20%7B%5Cmu%7D%27%27%20%3D%20-%7B%5Cmu%7D%27%20&plus;%20w%27%20%5C%5C%5Cend%7Bmatrix%7D" alt="\begin{matrix}
 {\mu}' = -\mu + T_{desire} + w
