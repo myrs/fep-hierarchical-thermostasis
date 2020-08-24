@@ -20,6 +20,8 @@ Initial temperature of an agent is set to the mean of the viable range (30 °C).
 * time steps from 201 to 250: -6 °C per time step
 * time steps from 251 to 300: 0 °C per time step (agent is not experiencing a change in temperature)
 
+<img src="https://latex.codecogs.com/gif.latex?f%28n%29%20%3D%20%5Cbegin%7Bcases%7D%20n/2%2C%20%26%20%5Ctextrm%7Bif%20%7D%20n%5Ctextrm%7B%20is%20even%7D%20%5C%5C%203n&plus;1%2C%20%26%20%5Ctextrm%7Bif%20%7D%20n%5Ctextrm%7B%20is%20odd%7D%20%5Cend%7Bcases%7D">
+
 Simulation ends at the time step 300.
 
 From the provided simulation (Figure 1) it can be observed that an agent can effectively deal with changes of temperature (both constant and sudden) and maintain itself in a viable interval for most of the environmental disturbances. The twist comes from the fact that at time steps from 201 to 250 an agent experiences a change of -6 °C per step, while it can only regulate the temperature by +5.8 °C per step. This means, the temperature of an agent will be dropping (-0.2 °C per step) despite its affords, and eventually will go out of the viable boundaries (be less than 20 °C). Effectively and sadly, our agent would cease to exist.
