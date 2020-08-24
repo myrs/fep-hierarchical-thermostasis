@@ -30,7 +30,7 @@ Initial temperature of an agent is set to the mean of the viable range (30 °C).
 
 After timestep 250 and agent is given a cool down time (temperature change is 0) till the end of the simulation at the time step 300.
 
-As organism can change its own temperature, that actual temperature change at each timestep <img src="https://latex.codecogs.com/gif.latex?%5Cinline%20%5Cdot%7BT%7D" alt='\dot{T}'> is a sum of the change of temperature dictated by the environment <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cdot%7BT_e%7D" alt="\dot{T_e}"> and change of temperature produced be the organism <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cdot%7BT_o%7D" alt="\dot{T_o}">:
+As organism can change its own temperature, that actual temperature change at each timestep <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BT%7D" alt='\dot{T}'> is a sum of the change of temperature dictated by the environment <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cdot%7BT_e%7D" alt="\dot{T_e}"> and change of temperature produced be the organism <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cdot%7BT_o%7D" alt="\dot{T_o}">:
 
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7BT%7D%20%3D%20%5Cdot%7BT_e%7D%20&plus;%20%5Cdot%7BT_o%7D" alt="\dot{T} = \dot{T_e} + \dot{T_o}">
 
@@ -110,9 +110,49 @@ From the provided simulation (Figure 1) it can be observed that an agent can eff
 *Figure 1. Simple interoceptive-only agent. An agent is shown to be able to regulate its temperature in principle. Despite this, it fails to do so when the temperature is dropping faster (steps 200 to 250) than its physiological ability to heat itself. In the simulated environment our an agent would cease to exist.*
 
 ### Adding exteroception
-As mentioned above, this project is inspired in (and roughly follows the) hierarchical model of active inference, presented by Pezzulo et at. in "Active Inference, homeostatic regulation and adaptive behavioural control". While an agent would die in the simulated world acting purely on its interoceptive inference, the hope should come from implementing (a next hierarchical level of) exteroception. It is hypothesised that this should allow an agent to have an unconditioned reflex: when provided with an exteroceptive cue (e.g. change in light), an agent should make it's temperature higher *in advance* in order to survive the following drop (or rise) of the temperature. Such next level should provide the underlying interoceptive layer with a different generative model (new settling point), altering this way the underlying interoceptive behaviour. In other words, an agent feelings of cold and hot are not absolute, but dictated by the higher (exteroceptive) level of the hierarchy, allowing it to be more adaptive.
+#### Description
+As mentioned above, this project is inspired in (and roughly follows the) hierarchical model of active inference, presented by Pezzulo et at. in "Active Inference, homeostatic regulation and adaptive behavioural control". While an agent would die in the simulated world acting purely on its interoceptive inference, the hope should come from implementing (a next hierarchical level of) exteroception. It is hypothesised that this should allow an agent to have an unconditioned (autonomic) reflex: when provided with an exteroceptive cue (e.g. change in light), an agent should make it's temperature higher *in advance* in order to survive the following drop (or rise) of the temperature. Such next level should provide the underlying interoceptive layer with a different generative model (new settling point), altering this way the underlying interoceptive behaviour. In other words, an agent feelings of cold and hot are not absolute, but dictated by the higher (exteroceptive) level of the hierarchy, allowing it to be more adaptive.
 
-To implement this proposal, we extend an agent with the exteroceptive layer, giving it an ability to perform an unconditioned (autonomic) reflex based on both *exteroceptive* and *interoceptive* inference. An agent is now given a sense of luminosity change per step. It is assumed that in the world where an agent is situated, a drop of temperature is preceded by a luminosity drop (and vise versa). A generative model of perception is given to an agent, with which it can infer which *desired temperature* generates the change in luminosity. This inferred desired temperature is then passed to the lower, interoceptive level, to set the desired dynamics of an agent. The provided simulation shows, how an agent can now effectively survive the drop of temperature by making its own temperature higher *in advance* once the luminosity starts to drop. Effectively, an agent now will survive in this world -- the task that was impossible with interoceptive inference only.
+To implement this proposal, we extend the world to include a new dynamics: a change in light over time <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BL%7D" alt='\dot{L}'> is followed (with some shift in time) by a change in temperature (<img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BT%7D" alt='\dot{T}'>). While the change in temperature dynamics remains the same as in the first version of the world,
+the following dynamics of the change in light is implemented:
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7BL%7D%20%3D%20%5Cleft%5C%7B%20%5Cbegin%7Bmatrix%7D%200%2C%20%26%20step%20%5Cleq%20175%20%5C%5C%20-0.7%2C%20%26%20step%20%3E%20175%20%5Cleq%20225%20%5C%5C%200%2C%20%26%20step%20%3E%20225%20%5C%5C%20%5Cend%7Bmatrix%7D%20%5Cright." alt="\dot{L} = 
+\left\{
+\begin{matrix}
+0, & step \leq 175 \\
+-0.7, & step > 175 \leq 225 \\ 
+0, & step > 225 \\
+\end{matrix}
+\right.">
+
+As it can be seen, the drop in light (from time steps 175 to 225) now indicates the further (from times steps 200 to 250) drop in temperature. It's worth to mention that here, for the sake of the simplicity of showing how the model works and the following discussion, we don't simulate such dynamics for all changes in temperature that our agent experiences throughout the simulation but focus on the provided example. 
+
+Now, in order to show how our agent can use this new information available to it, we extend an agent with the exteroceptive layer that perceives the change of light in time: <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cphi%20%3D%20%5Cdot%7BT%7D" alt="\phi = \dot{T}">. Again, here we skip the details of how exactly this information becomes available to an agent, but assume that there could be some underlying neural network (or brain) structure which is capable of performing this task. Next, a generative model of perception is given to an agent, with which it can infer which *desired temperature* generates the change in luminosity. We assume there is a simple linear relationship an agent learned during the evolution. It consists in agent belief that at the desired temperature at the mean of the viable range (30 °C) it expects the change in light to be 0 and than that a rise of a desired temperature to 1°C would correspond to drop in change in light of 0.1 conventional units. Agent's belief about sensory data are then:
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cphi%20%3D%20g%28%5Cmu%29%20&plus;%20z%20%5Ctext%7B%2C%20where%20%7D%20g%28%5Cmu%29%20%5Cequiv%200.1%28-%5Cmu%20&plus;%2030%29" alt="\phi = g(\mu) + z \text{, where } g(\mu) \equiv 0.1(-\mu + 30)">
+
+Where brain variable <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cmu" atl="\mu"> represents the desired temperature. Here we consider only dynamics to the first order. Maybe the most crucial fact we want to underline is that our agent does not have any preference over the environmental variable. In other words, the generative model for environmental dynamics can be ignored -- an agent only cares about inferring the correct desired temperature. We can then discard model prediction errors completely, which would have the same effect if the model prediction errors would be given an extremely low precision. This layer becomes more close in this sense to the simple perceptual inference through 'least mean square estimation on sensory data' (Buckley et al., 2017). Laplace-encoded free energy, error terms and recognition dynamic of the agent would be then:
+
+*Laplace-encoded energy:*
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20E%28%5Cwidetilde%7B%5Cmu%7D%2C%20%5Cwidetilde%7B%5Cphi%7D%29%20%3D%20%5Cfrac%7B1%7D%7B2%7D%20%5Cfrac%7B%7B%5Cvarepsilon_%7Bz%5B0%5D%7D%7D%5E%7B2%7D%7D%7B%7B%5Csigma_%7Bz%5B0%5D%7D%7D%5E%7B2%7D%7D" alt="E(\widetilde{\mu}, \widetilde{\phi}) = 
+\frac{1}{2}
+\frac{{\varepsilon_{z[0]}}^{2}}{{\sigma_{z[0]}}^{2}}">
+
+*where error term is:*
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cphi%20-%200.1%28-%5Cmu%20&plus;%2030%29" alt="\varepsilon_{z[0]} = \phi - 0.1(-\mu + 30)">
+
+*and recognition dynamics is:*
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7B%5Cmu%7D%20%3D%20%5Cmu%27%20-%20%5Ckappa_%7B%5Calpha%7D%5Cleft%20%5B%200.1%5Cfrac%7B%5Cvarepsilon_%7Bz%5B0%5D%7D%7D%7B%5Csigma_%7Bz%5B0%5D%7D%7D%20%5Cright%20%5D" alt="\dot{\mu} = \mu' - \kappa_{\alpha}\left [
+0.1\frac{\varepsilon_{z[0]}}{\sigma_{z[0]}}
+\right ]">
+
+Recall the equation of environmental dynamic (TODO link to equation) of our simple interoceptive agent already allows to set an arbitrary desired temperature <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20T_%7Bdesire%7D" alt="T_{desire}"> instead of a constant value. Now the inferred at the implemented exteroception layer desired temperature is effectively passed to this lower interoception layer providing with a dynamical settling point and setting this way an environmental model of our agent in a hierarchical way.
+
+####Results
+
+The provided simulation shows, how an agent can now effectively survive the drop of temperature by making its own temperature higher *in advance* once the luminosity starts to drop. Effectively, an agent now will survive in this world -- the task that was impossible with interoceptive inference only.
 
 ![Figure 2.](images/exteroceptive_passive_agent.png)
 
