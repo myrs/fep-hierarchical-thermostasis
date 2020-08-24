@@ -20,7 +20,17 @@ Initial temperature of an agent is set to the mean of the viable range (30 °C).
 * time steps from 201 to 250: -6 °C per time step
 * time steps from 251 to 300: 0 °C per time step (agent is not experiencing a change in temperature)
 
-<img src="https://latex.codecogs.com/gif.latex?f%28n%29%20%3D%20%5Cbegin%7Bcases%7D%20n/2%2C%20%26%20%5Ctextrm%7Bif%20%7D%20n%5Ctextrm%7B%20is%20even%7D%20%5C%5C%203n&plus;1%2C%20%26%20%5Ctextrm%7Bif%20%7D%20n%5Ctextrm%7B%20is%20odd%7D%20%5Cend%7Bcases%7D">
+<img src="https://latex.codecogs.com/png.latex?%5Cdot%7BT%7D%20%3D%20%5Cleft%5C%7B%20%5Cbegin%7Bmatrix%7D%200%2C%20%26%20step%20%5Cleq%2050%20%5C%5C%202%2C%20%26%20step%20%3E%2050%20%5Cleq%20100%20%5C%5C%205%2C%20%26%20step%20%3E%20100%20%5Cleq%20150%20%5C%5C%20-1%2C%20%26%20step%20%3E%20150%20%5Cleq%20200%20%5C%5C%20-6%2C%20%26%20step%20%3E%20200%20%5Cleq%20250%20%5C%5C%200%2C%20%26%20step%20%3E%20250%20%5Cend%7Bmatrix%7D%20%5Cright." alt="\dot{T} = 
+\left\{
+\begin{matrix}
+0, & step \leq 50 \\
+2, & step > 50 \leq 100 \\ 
+5, & step > 100 \leq 150 \\
+-1, & step > 150 \leq 200 \\
+-6, & step > 200 \leq 250 \\
+0, & step > 250
+\end{matrix}
+\right.">
 
 Simulation ends at the time step 300.
 
