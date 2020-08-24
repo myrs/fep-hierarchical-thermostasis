@@ -13,9 +13,9 @@ review"](http://dx.doi.org/10.1016/j.jmp.2017.09.004) by Buckley et al. in chapt
 
 An agent lives in a world where the only thing it needs to care about is maintaining its temperature inside a viable interval. It can sense the current temperature and a change of this temperature. It acts setting the  desired change of temperature directly. Though, as agent is bounded by physics of its body, it can only set this change inside a boundary (±5.8 °C per time step). It's viable range is 30 ±10 °C.
 
-Initial temperature of an agent is set to the mean of the viable range (30 °C). An agent is given a small warm up time (50 time steps) to infer the current temperature (as it's assumed to be unknown at the beginning of the simulation). After this, the world is simulated such way an agent experiences a change of temperature dictated by the environment (<img scr="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BT_e%7D" alt="\dot{T_e}">) at each timestep in a following way:
+Initial temperature of an agent is set to the mean of the viable range (30 °C). An agent is given a small warm up time (50 time steps) to infer the current temperature (as it's assumed to be unknown at the beginning of the simulation). After this, the world is simulated such way an agent experiences a change of temperature dictated by the environment <img scr="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BT_e%7D" alt="\dot{T_e}"> at each timestep in a following way:
 
-<img src=https://latex.codecogs.com/png.latex?%5Cdot%7BT_e%7D%20%3D%20%5Cleft%5C%7B%20%5Cbegin%7Bmatrix%7D%200%2C%20%26%20step%20%5Cleq%2050%20%5C%5C%202%2C%20%26%20step%20%3E%2050%20%5Cleq%20100%20%5C%5C%205%2C%20%26%20step%20%3E%20100%20%5Cleq%20150%20%5C%5C%20-1%2C%20%26%20step%20%3E%20150%20%5Cleq%20200%20%5C%5C%20-6%2C%20%26%20step%20%3E%20200%20%5Cleq%20250%20%5C%5C%200%2C%20%26%20step%20%3E%20250%20%5Cend%7Bmatrix%7D%20%5Cright." alt="\dot{T_e} = 
+<img src="https://latex.codecogs.com/png.latex?%5Cdot%7BT_e%7D%20%3D%20%5Cleft%5C%7B%20%5Cbegin%7Bmatrix%7D%200%2C%20%26%20step%20%5Cleq%2050%20%5C%5C%202%2C%20%26%20step%20%3E%2050%20%5Cleq%20100%20%5C%5C%205%2C%20%26%20step%20%3E%20100%20%5Cleq%20150%20%5C%5C%20-1%2C%20%26%20step%20%3E%20150%20%5Cleq%20200%20%5C%5C%20-6%2C%20%26%20step%20%3E%20200%20%5Cleq%20250%20%5C%5C%200%2C%20%26%20step%20%3E%20250%20%5Cend%7Bmatrix%7D%20%5Cright." alt="\dot{T_e} = 
 \left\{
 \begin{matrix}
 0, & step \leq 50 \\
@@ -29,9 +29,9 @@ Initial temperature of an agent is set to the mean of the viable range (30 °C).
 
 After timestep 250 and agent is given a cool down time (temperature change is 0) till the end of the simulation at the time step 300.
 
-As organism can change its own temperature, that actual temperature change at each timestep (<img src="https://latex.codecogs.com/gif.latex?%5Cinline%20%5Cdot%7BT%7D" alt='\dot{T}'>) is a sum of the change of temperature dictated by the environment and change of temperature produced be the organism <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BT_o%7D" alt="\dot{T_o}">:
+As organism can change its own temperature, that actual temperature change at each timestep <img src="https://latex.codecogs.com/gif.latex?%5Cinline%20%5Cdot%7BT%7D" alt='\dot{T}'> is a sum of the change of temperature dictated by the environment <img scr="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BT_e%7D" alt="\dot{T_e}"> and change of temperature produced be the organism <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BT_o%7D" alt="\dot{T_o}">:
 
-<img src="https://latex.codecogs.com/png.latex?%5Cdot%7BT%7D%20%3D%20%5Cdot%7BT_e%7D%20&plus;%20%5Cdot%7BT_c%7D" alt="\dot{T} = \dot{T_e} + \dot{T_c}">
+<img src="https://latex.codecogs.com/png.latex?%5Cdot%7BT%7D%20%3D%20%5Cdot%7BT_e%7D%20&plus;%20%5Cdot%7BT_c%7D" alt="\dot{T} = \dot{T_e} + \dot{T_o}">
 
 From the provided simulation (Figure 1) it can be observed that an agent can effectively deal with changes of temperature (both constant and sudden) and maintain itself in a viable interval for most of the environmental disturbances. The twist comes from the fact that at time steps from 201 to 250 an agent experiences a change of -6 °C per step, while it can only regulate the temperature by +5.8 °C per step. This means, the temperature of an agent will be dropping (-0.2 °C per step) despite its affords, and eventually will go out of the viable boundaries (be less than 20 °C). Effectively and sadly, our agent would cease to exist.
 
