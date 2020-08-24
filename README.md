@@ -31,7 +31,19 @@ After timestep 250 and agent is given a cool down time (temperature change is 0)
 
 As organism can change its own temperature, that actual temperature change at each timestep <img src="https://latex.codecogs.com/gif.latex?%5Cinline%20%5Cdot%7BT%7D" alt='\dot{T}'> is a sum of the change of temperature dictated by the environment <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BT_e%7D" alt="\dot{T_e}"> and change of temperature produced be the organism <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BT_o%7D" alt="\dot{T_o}">:
 
-<img src="https://latex.codecogs.com/png.latex?%5Cdot%7BT%7D%20%3D%20%5Cdot%7BT_e%7D%20&plus;%20%5Cdot%7BT_c%7D" alt="\dot{T} = \dot{T_e} + \dot{T_o}">
+<img src="https://latex.codecogs.com/png.latex?%5Cdot%7BT%7D%20%3D%20%5Cdot%7BT_e%7D%20&plus;%20%5Cdot%7BT_o%7D" alt="\dot{T} = \dot{T_e} + \dot{T_o}">
+
+We then construct an agent's generative model, where <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cmu" atl="\mu"> represents environmental variable, namely the organisms temperature. Here an important point to make is that while this temperature is internal to an organism, it is still an environmental (although *interoceptive*) variable for the model. As an organism prefers to have a temperature, corresponding to it's desired temperature, its beliefs about environmental dynamics should be encoded such way it has a settling point at the desired temperature (Buckley et al., 2017):
+
+<img src="https://latex.codecogs.com/png.latex?%5Cfrac%7Bd%5Cmu%7D%7Bdt%7D%20%3D%20f%28%5Cmu%29%2C%20f%28%5Cmu%29%20%3D%20-%5Cmu%20&plus;%20T_%7Bdesire%7D" alt="\frac{d\mu}{dt} = f(\mu), f(\mu) = -\mu + T_{desire}">
+
+For now it is logical to assume that the desired temperature is static and set to the mean of the viable interval (<img src="https://latex.codecogs.com/png.latex?%5Cinline%20T_%7Bdesire%7D%20%3D%2030" alt="T_{desire} = 30">) but for the sake of the further extensions of an agent we should remember that <img="https://latex.codecogs.com/png.latex?%5Cinline%20T_%7Bdesire%7D" alt="T_{desire}"> can take any values. The generative model up to second order can be written as:
+
+<img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cbegin%7Bmatrix%7D%20%7B%5Cmu%7D%27%20%3D%20-%5Cmu%20&plus;%20T_%7Bdesire%7D%20&plus;%20w%20%5C%5C%20%7B%5Cmu%7D%27%27%20%3D%20-%7B%5Cmu%7D%27%20&plus;%20w%27%20%5C%5C%5Cend%7Bmatrix%7D" alt="\begin{matrix}
+{\mu}' = -\mu + T_{desire} + w
+\\ 
+{\mu}'' = -{\mu}' + w'
+\\\end{matrix}">
 
 From the provided simulation (Figure 1) it can be observed that an agent can effectively deal with changes of temperature (both constant and sudden) and maintain itself in a viable interval for most of the environmental disturbances. The twist comes from the fact that at time steps from 201 to 250 an agent experiences a change of -6 °C per step, while it can only regulate the temperature by +5.8 °C per step. This means, the temperature of an agent will be dropping (-0.2 °C per step) despite its affords, and eventually will go out of the viable boundaries (be less than 20 °C). Effectively and sadly, our agent would cease to exist.
 
