@@ -69,6 +69,7 @@ Laplace-encoded free energy, error terms and recognition dynamic of the agent wo
 \right ]">
 
 *where error terms are:*
+
 <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Bmatrix%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cphi%20-%20%5Cmu%20%5C%5C%20%5Cvarepsilon_%7Bz%5B1%5D%7D%20%3D%20%7B%5Cphi%7D%27%20-%20%7B%5Cmu%7D%27%20%5C%5C%20%5Cvarepsilon_%7Bw%5B0%5D%7D%20%3D%20%7B%5Cmu%7D%27%20&plus;%20%5Cmu%20-%20T_%7Bdesire%7D%20%5C%5C%20%5Cvarepsilon_%7Bw%5B1%5D%7D%20%3D%20%7B%5Cmu%7D%27%27%20&plus;%20%5Cmu%27%20%5C%5C%5Cend%7Bmatrix%7D" alt="\begin{matrix}
 \varepsilon_{z[0]} = \phi - \mu \\
 \varepsilon_{z[1]} = {\phi}' - {\mu}' \\
@@ -76,7 +77,8 @@ Laplace-encoded free energy, error terms and recognition dynamic of the agent wo
 \varepsilon_{w[1]} = {\mu}'' + \mu'
 \\\end{matrix}">
 
-*and recognition dynamics is:*
+*Then, recognition dynamics is:*
+
 <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Bmatrix%7D%20%5Cdot%7B%5Cmu%7D%20%3D%20%5Cmu%27%20-%20%5Ckappa_%7B%5Calpha%7D%5Cleft%20%5B%20-%5Cfrac%7B%5Cvarepsilon_%7Bz%5B0%5D%7D%7D%7B%5Csigma_%7Bz%5B0%5D%7D%7D%20&plus;%20%5Cfrac%7B%5Cvarepsilon_%7Bw%5B0%5D%7D%7D%7B%5Csigma_%7Bw%5B0%5D%7D%7D%20%5Cright%20%5D%20%5C%5C%20%5Cdot%7B%5Cmu%27%7D%20%3D%20%5Cmu%27%27%20-%20%5Ckappa_%7B%5Calpha%7D%5Cleft%20%5B%20-%5Cfrac%7B%5Cvarepsilon_%7Bz%5B1%5D%7D%7D%7B%5Csigma_%7Bz%5B1%5D%7D%7D%20&plus;%20%5Cfrac%7B%5Cvarepsilon_%7Bw%5B0%5D%7D%7D%7B%5Csigma_%7Bw%5B0%5D%7D%7D%20&plus;%20%5Cfrac%7B%5Cvarepsilon_%7Bw%5B1%5D%7D%7D%7B%5Csigma_%7Bw%5B1%5D%7D%7D%20%5Cright%20%5D%20%5C%5C%20%5Cdot%7B%5Cmu%27%27%7D%20%3D%20-%20%5Ckappa_%7B%5Calpha%7D%20%5Cfrac%7B%5Cvarepsilon_%7Bw%5B1%5D%7D%7D%7B%5Csigma_%7Bw%5B1%5D%7D%7D%20%5C%5C%5Cend%7Bmatrix%7D" alt="\begin{matrix}
 \dot{\mu} = \mu' - \kappa_{\alpha}\left [
 -\frac{\varepsilon_{z[0]}}{\sigma_{z[0]}} + 
@@ -90,6 +92,13 @@ Laplace-encoded free energy, error terms and recognition dynamic of the agent wo
 \right ]
 \\
 \dot{\mu''} = - \kappa_{\alpha} \frac{\varepsilon_{w[1]}}{\sigma_{w[1]}}
+\\\end{matrix}">
+
+As it was mentioned about, an agent believes it can change the temperature of its body directly. While it could seem biologically implausible at a first glance, for simplicity we just keep unaware of how actually the temperature is changed assuming an underlying biologically plausible way of doing it (e.g. by sweating to cool down or shivering to warn up). In terms of active inference we need to find how the free energy changes with respect to action <img src="https://latex.codecogs.com/png.latex?%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%5Cleft%20%5B%20%5Cfrac%7Bd%5Cphi%27%7D%7Bda%7D%20%5Cfrac%7B%5Cpartial%20E%7D%7B%5Cpartial%5Cphi%7D%20%5Cright%20%5D" alt="\dot{a} = -\kappa_{\alpha}\left [ \frac{d\phi'}{da} \frac{\partial E}{\partial\phi} \right ]">, where <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cfrac%7B%5Cpartial%20E%7D%7B%5Cpartial%5Cphi%7D" alt="\frac{\partial E}{\partial\phi}"> can be derived taking partial derivative of the Laplace-encoded free energy (TODO link to formula) and <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cfrac%7Bd%5Cphi%27%7D%7Bda%7D" alt="\frac{d\phi'}{da}"> term is known as the inverse model and is equal to *1* as our agent can set the temperature change directly. This way, the minimisation of free energy through action can be written as:
+
+<img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Bmatrix%7D%20%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%20%5Cast%201%20%5Cast%20%5Cfrac%7B%5Cvarepsilon_%7Bz%5B1%5D%7D%7D%7B%5Csigma_%7Bz%5B1%5D%7D%7D%20%5C%5C%20%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%20%5Cfrac%7B%5Cvarepsilon_%7Bz%5B1%5D%7D%7D%7B%5Csigma_%7Bz%5B1%5D%7D%7D%20%5C%5C%5Cend%7Bmatrix%7D" alt="\begin{matrix}
+\dot{a} = -\kappa_{\alpha} \ast 1 \ast \frac{\varepsilon_{z[1]}}{\sigma_{z[1]}} \\
+\dot{a} = -\kappa_{\alpha} \frac{\varepsilon_{z[1]}}{\sigma_{z[1]}}
 \\\end{matrix}">
 
 
