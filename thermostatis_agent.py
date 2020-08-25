@@ -704,7 +704,7 @@ class ProprioceptiveAgent(ActiveExteroception):
         # generative model is 10 velocities are needed to change the light by 1
         # 1 velocity changes light by 0.1
         # if I move upward the light will increase
-        self.pr_e_z_0.append(light_change_error - 0.1 * (-self.pr_mu[-1]))
+        self.pr_e_z_0.append(light_change_error - (-0.1 * self.pr_mu[-1]))
 
     def upd_pr_err_w_0(self):
         # error between model and generation of model
