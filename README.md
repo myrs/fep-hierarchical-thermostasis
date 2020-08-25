@@ -35,7 +35,15 @@ As organism can change its own temperature, that actual temperature change at ea
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7BT%7D%20%3D%20%5Cdot%7BT_e%7D%20&plus;%20%5Cdot%7BT_o%7D" alt="\dot{T} = \dot{T_e} + \dot{T_o}">
 
 #### Model
-We then construct an agent's generative model, where <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cmu" atl="\mu"> represents environmental variable, namely the organisms' temperature. Here an important point to make is that while this temperature is internal to an organism, it is still an environmental (although *interoceptive*) variable for the model. As an organism prefers to have a temperature, corresponding to it's desired temperature, its beliefs about environmental dynamics should be encoded such way it has a settling point at the desired temperature (Buckley et al., 2017):
+An agent senses both the temperature and the change in temperature (defined as bold letters <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cboldsymbol%7B%5Cphi%7D" alt="\boldsymbol{\phi}">):
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cbegin%7Bmatrix%7D%20%5Cboldsymbol%7B%5Cphi%7D%20%3D%20T%20%5C%5C%20%5Cboldsymbol%7B%5Cphi%27%7D%20%3D%20%5Cdot%7BT%7D%20%5C%5C%5Cend%7Bmatrix%7D" alt="\begin{matrix}
+\boldsymbol{\phi} = T 
+\\ 
+\boldsymbol{\phi'} = \dot{T} 
+\\\end{matrix}">
+
+We can now construct an agent's generative model, where <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cmu" atl="\mu"> represents environmental variable, namely the organisms' temperature. Here an important point to make is that while this temperature is internal to an organism, it is still an environmental (although *interoceptive*) variable for the model. As an organism prefers to have a temperature, corresponding to it's desired temperature, its beliefs about environmental dynamics should be encoded such way it has a settling point at the desired temperature (Buckley et al., 2017):
 
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cfrac%7Bd%5Cmu%7D%7Bdt%7D%20%3D%20f%28%5Cmu%29%20%5Ctext%7B%2C%20where%20%7Df%28%5Cmu%29%20%5Cequiv%20-%5Cmu%20&plus;%20T_%7Bdesire%7D" alt="\frac{d\mu}{dt} = f(\mu) \text{, where }f(\mu) \equiv -\mu + T_{desire}">
 
@@ -70,9 +78,9 @@ Laplace-encoded free energy, error terms and recognition dynamic of the agent wo
 
 *where error terms are:*
 
-<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cbegin%7Bmatrix%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cphi%20-%20%5Cmu%20%5C%5C%20%5Cvarepsilon_%7Bz%5B1%5D%7D%20%3D%20%7B%5Cphi%7D%27%20-%20%7B%5Cmu%7D%27%20%5C%5C%20%5Cvarepsilon_%7Bw%5B0%5D%7D%20%3D%20%7B%5Cmu%7D%27%20&plus;%20%5Cmu%20-%20T_%7Bdesire%7D%20%5C%5C%20%5Cvarepsilon_%7Bw%5B1%5D%7D%20%3D%20%7B%5Cmu%7D%27%27%20&plus;%20%5Cmu%27%20%5C%5C%5Cend%7Bmatrix%7D" alt="\begin{matrix}
-\varepsilon_{z[0]} = \phi - \mu \\
-\varepsilon_{z[1]} = {\phi}' - {\mu}' \\
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cbegin%7Bmatrix%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cboldsymbol%7B%5Cphi%7D%20-%20%5Cmu%20%5C%5C%20%5Cvarepsilon_%7Bz%5B1%5D%7D%20%3D%20%7B%5Cboldsymbol%7B%5Cphi%7D%7D%27%20-%20%7B%5Cmu%7D%27%20%5C%5C%20%5Cvarepsilon_%7Bw%5B0%5D%7D%20%3D%20%7B%5Cmu%7D%27%20&plus;%20%5Cmu%20-%20T_%7Bdesire%7D%20%5C%5C%20%5Cvarepsilon_%7Bw%5B1%5D%7D%20%3D%20%7B%5Cmu%7D%27%27%20&plus;%20%5Cmu%27%20%5C%5C%5Cend%7Bmatrix%7D" alt="\begin{matrix}
+\varepsilon_{z[0]} = \boldsymbol{\phi} - \mu \\
+\varepsilon_{z[1]} = {\boldsymbol{\phi}}' - {\mu}' \\
 \varepsilon_{w[0]} = {\mu}' + \mu - T_{desire} \\
 \varepsilon_{w[1]} = {\mu}'' + \mu'
 \\\end{matrix}">
@@ -131,7 +139,11 @@ the following dynamics of the change in light is implemented:
 As it can be seen, the drop in light (from time steps 175 to 225) now indicates the further (from times steps 200 to 250) drop in temperature. It's worth to mention that here, for the sake of the simplicity of showing how the model works and the following discussion, we don't simulate such dynamics for all changes in temperature that our agent experiences throughout the simulation, but focus on the provided example. 
 
 #### Model
-Now, in order to show how our agent can use this new information available to it, we extend an agent with the exteroceptive layer that perceives the change of light in time: <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cphi%20%3D%20%5Cdot%7BT%7D" alt="\phi = \dot{T}">. Again, here we skip the details of how exactly this information becomes available to an agent, but assume that there could be some underlying neural network (or brain) structure which is capable of performing this task. Next, a generative model of perception is given to an agent, with which it can infer which *desired temperature* generates the change in light. We assume there is a simple linear relationship our agent has learned during the evolution. It consists in agent's belief that at the desired temperature at the mean of the viable range (30 °C) it expects the change in light to be 0 and that a rise of a desired temperature to 1°C would correspond to a drop in change in light of 0.1 conventional units. Agent's belief about sensory data are then as:
+Now, in order to show how our agent can use this new information available to it, we extend an agent with the exteroceptive layer that perceives the change of light in time: 
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cboldsymbol%7B%5Cphi%7D%20%3D%20%5Cdot%7BL%7D" alt="\boldsymbol{\phi} = \dot{L}">
+
+Again, here we skip the details of how exactly this information becomes available to an agent, but assume that there could be some underlying neural network (or brain) structure which is capable of performing this task. Next, a generative model of perception is given to an agent, with which it can infer which *desired temperature* generates the change in light. We assume there is a simple linear relationship our agent has learned during the evolution. It consists in agent's belief that at the desired temperature at the mean of the viable range (30 °C) it expects the change in light to be 0 and that a rise of a desired temperature to 1°C would correspond to a drop in change in light of 0.1 conventional units. Agent's belief about sensory data are then as:
 
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cphi%20%3D%20g%28%5Cmu%29%20&plus;%20z%20%5Ctext%7B%2C%20where%20%7D%20g%28%5Cmu%29%20%5Cequiv%200.1%28-%5Cmu%20&plus;%2030%29" alt="\phi = g(\mu) + z \text{, where } g(\mu) \equiv 0.1(-\mu + 30)">
 
@@ -145,7 +157,7 @@ Here environmental variable <img src="https://latex.codecogs.com/png.latex?%5Cdp
 
 *where error term is:*
 
-<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cphi%20-%200.1%28-%5Cmu%20&plus;%2030%29" alt="\varepsilon_{z[0]} = \phi - 0.1(-\mu + 30)">
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cboldsymbol%7B%5Cphi%7D%20-%200.1%28-%5Cmu%20&plus;%2030%29" alt="\varepsilon_{z[0]} = \boldsymbol{\phi} - 0.1(-\mu + 30)">
 
 *and recognition dynamics is:*
 
@@ -175,7 +187,11 @@ Pezzulo et at. have proposed, that "at the higher levels of the hierarchy ... re
 While our agent already has interoceptive and exteroceptive sensors, it can only act interoceptively (by setting the desired temperature based on exteroception and setting it's temperature change based on interoception). We can easily imagine a world, where adding exteroceptive action could be beneficial for our agent and which would make it more adaptive (an evolution would definitely do so eventually). We can now assume an agent lives in water environment. In this environment it observes more sunlight in warmer places (closer to the light) and less sunlight in colder places (further from the light). Now an agent equipped with this simple relationship thought a generative model show be able to act in the world and find better temperature regimes acting exteroceptively. In other words, it would seek to find such exteroceptive dynamics (change in light) that would better explain its brain variable (temperature change) through acting (setting the change in light). Here two things are worth a more detailed explanation. First, the right generative model would be such, that encodes the inverse relationship between the internal temperature change and change in light. This way our agent would seek darker places (less light) when its body gets hotter and vise versa. Second, and more importantly, it seems there is a big assumption when we say that the agent can change the light directly. Indeed, an agent is actually moving up and down in the water, which is what changing the light intensity. Out point here is that the agent (to some extent, see *Next steps*) does not need to know *how* it is changing the light intensity in order to control it! It only need to know *that* it has the ability to change the intensity of light. Now, how is it really changed is the task of the (underlying) reflex arc. While this reflex arc is out of the scope of the simulation at this step, it's important to stress that once the right command is given (from the higher level of the hierarchy), such reflex arc will perform it, leading, effectively, to the change in lighting. Summarising, an organism does not really need to know *how* the change in light it happens to *make* it happen at this level of abstraction.
 
 #### Model
-As proposed above, we extend an agent with a generative model of how its change in temperature <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%7B%5Cmu%5E%7Bi%7D%7D%27" alt="{\mu^{i}}'"> generates the change in light over time <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BL%7D" alt='\dot{L}'>. Importantly, here we reuse the environmental variable <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%7B%5Cmu%5E%7Bi%7D%7D%27" alt="{\mu^{i}}'"> (superscript *i* meaning interoceptive), namely the change in temperature which is already *provided* by the interoceptive layer of the hierarchy. In a sense, an agent *reuses* the recognition dynamics of the interoceptive layer. We assume here that an agent has already learned (e.g. through evolution) that a change in light generates the change in temperature in a linear way: a rise in temperature by *1°C* corresponds to a drop in light by *1* conventional unit. It can be observed that the model is *inverse* by its nature. Indeed, this makes sense: if an agent experiences a rise in temperature it would seek less light -- going deeper will eventually make its temperature drop (and this is something an agent desires):
+As proposed above, we extend an agent with a generative model of how its change in temperature <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%7B%5Cmu%5E%7Bi%7D%7D%27" alt="{\mu^{i}}'"> generates the change in light over time <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BL%7D" alt='\dot{L}'>. An agent, as before, senses the change of light in time as:
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cboldsymbol%7B%5Cphi%7D%20%3D%20%5Cdot%7BL%7D" alt="\boldsymbol{\phi} = \dot{L}">
+
+Importantly, here we reuse the environmental variable <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%7B%5Cmu%5E%7Bi%7D%7D%27" alt="{\mu^{i}}'"> (superscript *i* meaning interoceptive), namely the change in temperature which is already *provided* by the interoceptive layer of the hierarchy. In a sense, an agent *reuses* the recognition dynamics of the interoceptive layer. We assume here that an agent has already learned (e.g. through evolution) that a change in light generates the change in temperature in a linear way: a rise in temperature by *1°C* corresponds to a drop in light by *1* conventional unit. It can be observed that the model is *inverse* by its nature. Indeed, this makes sense: if an agent experiences a rise in temperature it would seek less light -- going deeper will eventually make its temperature drop (and this is something an agent desires):
 
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cphi%20%3D%20g%28%5Cmu%29%20&plus;%20z%20%5Ctext%7B%2C%20where%20%7D%20g%28%5Cmu%29%20%5Cequiv%20-%7B%5Cmu%5E%7Bi%7D%7D%27" alt="\phi = g(\mu) + z \text{, where } g(\mu) \equiv -{\mu^{i}}''">
 
@@ -233,7 +249,7 @@ We first need to extend the previous version of our agent to incorporate the pre
 
 We can then define the model to give an agent a sense of proprioception. On a proprioceptive layer an agent will receive a sensation of the light change error (weighted by the corresponding variance) from the layer above (indicated with subscript *ae*):
 
-<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cphi%20%3D%20%5Cfrac%7B%5Cvarepsilon%5E%7Bae%7D_%7B%5B0%5D%7D%7D%7B%5Csigma%5E%7Bae%7D_%7B%5B0%5D%7D%7D" alt="\phi = \frac{\varepsilon^{ae}_{[0]}}{\sigma^{ae}_{[0]}}">
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cphi%20%3D%20%5Cfrac%7B%5Cvarepsilon%5E%7Bea%7D_%7B%5B0%5D%7D%7D%7B%5Csigma%5E%7Bea%7D_%7B%5B0%5D%7D%7D" alt="\phi = \frac{\varepsilon^{ea}_{[0]}}{\sigma^{ea}_{[0]}}">
 
 The next step is to define the environmental variable <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cmu" atl="\mu"> that represents the agent's estimate of the proprioceptive state. Similar to the case of the exteroceptive layer, inferring the desired temperature, an agent here does not have any preference about its proprioceptive state. Therefore, it will not have a generative model of the environmental dynamics. An agent believes that its proprioceptive sensations (a light change error passed from the layer above) are generated in a linear way in the following manner:
 
@@ -249,7 +265,7 @@ meaning it believes that in order to suppress the light change it needs to move 
 
 *where error term is:*
 
-<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cphi%20-%20%28-0.1%5Cmu%29" alt="\varepsilon_{z[0]} = \phi - (-0.1\mu)">
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cboldsymbol%7B%5Cphi%7D%20-%20%28-0.1%5Cmu%29" alt="\varepsilon_{z[0]} = \boldsymbol{\phi} - (-0.1\mu)">
 
 *and recognition dynamics is:*
 
