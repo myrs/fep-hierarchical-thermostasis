@@ -249,7 +249,7 @@ We first need to extend the previous version of our agent to incorporate the pre
 
 We can then define the model to give an agent a sense of proprioception. On a proprioceptive layer an agent will receive a sensation of the light change error (weighted by the corresponding variance) from the layer above (indicated with subscript *ae*):
 
-<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cphi%20%3D%20%5Cfrac%7B%5Cvarepsilon%5E%7Bea%7D_%7B%5B0%5D%7D%7D%7B%5Csigma%5E%7Bea%7D_%7B%5B0%5D%7D%7D" alt="\phi = \frac{\varepsilon^{ea}_{[0]}}{\sigma^{ea}_{[0]}}">
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cboldsymbol%7B%5Cphi%7D%20%3D%20%5Cfrac%7B%5Cvarepsilon%5E%7Bea%7D_%7B%5B0%5D%7D%7D%7B%5Csigma%5E%7Bea%7D_%7B%5B0%5D%7D%7D" alt="\boldsymbol{\phi} = \frac{\varepsilon^{ea}_{[0]}}{\sigma^{ea}_{[0]}}">
 
 The next step is to define the environmental variable <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cmu" atl="\mu"> that represents the agent's estimate of the proprioceptive state. Similar to the case of the exteroceptive layer, inferring the desired temperature, an agent here does not have any preference about its proprioceptive state. Therefore, it will not have a generative model of the environmental dynamics. An agent believes that its proprioceptive sensations (a light change error passed from the layer above) are generated in a linear way in the following manner:
 
@@ -269,7 +269,7 @@ meaning it believes that in order to suppress the light change it needs to move 
 
 *and recognition dynamics is:*
 
-<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7B%5Cmu%7D%20%3D%20%5Cmu%27%20-%20%5Ckappa_%7B%5Calpha%7D%5Cleft%20%5B%200.1%5Cfrac%7B%5Cvarepsilon_%7Bz%5B0%5D%7D%7D%7B%5Csigma_%7Bz%5B0%5D%7D%7D%20%5Cright%20%5D" alt="\dot{\mu} = -\kappa_{\alpha}\left [
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7B%5Cmu%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%5Cleft%20%5B%200.1%5Cfrac%7B%5Cvarepsilon_%7Bz%5B0%5D%7D%7D%7B%5Csigma_%7Bz%5B0%5D%7D%7D%20%5Cright%20%5D" alt="\dot{\mu} = -\kappa_{\alpha}\left [
 0.1\frac{\varepsilon_{z[0]}}{\sigma_{z[0]}}
 \right ]">
 
