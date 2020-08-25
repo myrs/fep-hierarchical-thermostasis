@@ -273,6 +273,10 @@ meaning it believes that in order to suppress the light change it needs to move 
 0.1\frac{\varepsilon_{z[0]}}{\sigma_{z[0]}}
 \right ]">
 
+The action is now performed on the proprioceptive layer. As agent beliefs he can minimize his sensation (change in light error) acting directly and to change light by 1 it needs to change velocity by 10, <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cfrac%7Bd%5Cphi%7D%7Bda%7D" alt="\frac{d\phi}{da}"> is *0.1*, and as before the first term <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cfrac%7B%5Cpartial%20E%7D%7B%5Cpartial%5Cphi%7D" alt="\frac{\partial E}{\partial\phi}"> is calculated as a partial derivate of the Laplace-encoded free energy over the sensory information. We define the update of action then as:
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%20%5Cleft%20%5B0.1%5Cfrac%7B%5Cvarepsilon_%7Bz%5B0%5D%7D%7D%7B%5Csigma_%7Bz%5B0%5D%7D%7D%20%5Cright%20%5D" alt="\dot{a} = -\kappa_{\alpha} \left [0.1\frac{\varepsilon_{z[0]}}{\sigma_{z[0]}}  \right ]">
+
 Finally, we can finish our predictive coding scheme implementation by subtracting the prediction of the proprioceptive layer form the sense of the exteroception layer, responsible for inferring the desired temperature:
 
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cboldsymbol%7B%5Cphi%5E%7Bet%7D%7D%20%3D%20%5Cdot%7BL%7D%20-%200.1%20%5Cmu%5E%7Bpr%7D" alt="\boldsymbol{\phi^{et}} = \dot{L} - 0.1 \mu^{pr}">
