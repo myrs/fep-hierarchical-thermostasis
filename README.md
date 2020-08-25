@@ -158,6 +158,7 @@ Recall that the equation of environmental dynamic **[TODO link to equation]** of
 A schematic representation of an agent is given in Figure 2.
 
 ![Figure 2.](images/exteroceptive_layer_diagram.png)
+
 *Figure 2. A schematic representation of the agent with two layers: exteroceptive and underlying interoceptive layer. While interoceptive layer does all the 'hard job' of actually maintaining a temperature of an agent, exteroceptive layer infers the desired temperature based on the exteroceptive (change in light) information. This gives an agent more information about the world (and, importantly, information that can be obtained only from the external environment) while it still recruits and existing interoceptive model to maintain homeostasis.*
 
 #### Results
