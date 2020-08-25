@@ -209,7 +209,7 @@ Laplace-encoded free energy, error terms and recognition dynamic of the agent wo
 
 *where error term for exteroceptive sense of change in light is:*
 
-<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cphi%20-%20%28-%7B%5Cmu%5E%7Bi%7D%7D%27%29" alt="\varepsilon_{z[0]} = \phi - (-{\mu^{i}}')">
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cboldsymbol%7B%5Cphi%7D%20-%20%28-%7B%5Cmu%5E%7Bi%7D%7D%27%29" alt="\varepsilon_{z[0]} = \boldsymbol{\phi} - (-{\mu^{i}}')">
 
 and model errors <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cvarepsilon_%7Bw%5Bi%5D%7D" alt="\varepsilon_{w[i]}"> and variances <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Csigma_%7Bw%5Bi%5D%7D" alt="\sigma_{w[i]}"> are the same as in the interoceptive model.
 
