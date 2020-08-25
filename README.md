@@ -96,9 +96,9 @@ Laplace-encoded free energy, error terms and recognition dynamic of the agent wo
 
 As it was mentioned above, an agent believes it can change the temperature of its body directly. While this could seem biologically implausible at a first glance, for simplicity we just keep unaware of how actually the temperature is changed assuming an underlying biologically plausible way of doing it (e.g. by sweating to cool down or shivering to warn up). In terms of active inference we need to find how the free energy changes with respect to action:
 
-<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%5Cleft%20%5B%20%5Cfrac%7Bd%5Cphi%27%7D%7Bda%7D%20%5Cfrac%7B%5Cpartial%20E%7D%7B%5Cpartial%5Cphi%7D%20%5Cright%20%5D" alt="\dot{a} = -\kappa_{\alpha}\left [ \frac{d\phi'}{da} \frac{\partial E}{\partial\phi} \right ]">
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%5Cleft%20%5B%20%5Cfrac%7Bd%5Cphi%27%7D%7Bda%7D%20%5Cfrac%7B%5Cpartial%20E%7D%7B%5Cpartial%5Cphi%27%7D%20%5Cright%20%5D" alt="\dot{a} = -\kappa_{\alpha}\left [ \frac{d\phi'}{da} \frac{\partial E}{\partial\phi'} \right ]">
 
-where <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cfrac%7B%5Cpartial%20E%7D%7B%5Cpartial%5Cphi%7D" alt="\frac{\partial E}{\partial\phi}"> can be derived taking partial derivative of the Laplace-encoded free energy (TODO link to formula) and <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cfrac%7Bd%5Cphi%27%7D%7Bda%7D" alt="\frac{d\phi'}{da}"> term is known as the inverse model. For our agent it is equal to *1* as it can set the temperature change directly. This way, the minimisation of free energy through action can be written as:
+where <img src=https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cfrac%7B%5Cpartial%20E%7D%7B%5Cpartial%5Cphi%27%7D" alt="\frac{\partial E}{\partial\phi'}"> can be derived taking partial derivative of the Laplace-encoded free energy (TODO link to formula) and <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cfrac%7Bd%5Cphi%27%7D%7Bda%7D" alt="\frac{d\phi'}{da}"> term is known as the inverse model. For our agent it is equal to *1* as it can set the temperature change directly. This way, the minimisation of free energy through action can be written as:
 
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cbegin%7Bmatrix%7D%20%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%20%5Cast%201%20%5Cast%20%5Cfrac%7B%5Cvarepsilon_%7Bz%5B1%5D%7D%7D%7B%5Csigma_%7Bz%5B1%5D%7D%7D%20%5C%5C%20%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%20%5Cfrac%7B%5Cvarepsilon_%7Bz%5B1%5D%7D%7D%7B%5Csigma_%7Bz%5B1%5D%7D%7D%20%5C%5C%5Cend%7Bmatrix%7D" alt="\begin{matrix}
 \dot{a} = -\kappa_{\alpha} \ast 1 \ast \frac{\varepsilon_{z[1]}}{\sigma_{z[1]}} \\
@@ -131,6 +131,7 @@ the following dynamics of the change in light is implemented:
 
 As it can be seen, the drop in light (from time steps 175 to 225) now indicates the further (from times steps 200 to 250) drop in temperature. It's worth to mention that here, for the sake of the simplicity of showing how the model works and the following discussion, we don't simulate such dynamics for all changes in temperature that our agent experiences throughout the simulation, but focus on the provided example. 
 
+#### Model
 Now, in order to show how our agent can use this new information available to it, we extend an agent with the exteroceptive layer that perceives the change of light in time: <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cphi%20%3D%20%5Cdot%7BT%7D" alt="\phi = \dot{T}">. Again, here we skip the details of how exactly this information becomes available to an agent, but assume that there could be some underlying neural network (or brain) structure which is capable of performing this task. Next, a generative model of perception is given to an agent, with which it can infer which *desired temperature* generates the change in light. We assume there is a simple linear relationship our agent has learned during the evolution. It consists in agent's belief that at the desired temperature at the mean of the viable range (30 °C) it expects the change in light to be 0 and that a rise of a desired temperature to 1°C would correspond to a drop in change in light of 0.1 conventional units. Agent's belief about sensory data are then as:
 
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cphi%20%3D%20g%28%5Cmu%29%20&plus;%20z%20%5Ctext%7B%2C%20where%20%7D%20g%28%5Cmu%29%20%5Cequiv%200.1%28-%5Cmu%20&plus;%2030%29" alt="\phi = g(\mu) + z \text{, where } g(\mu) \equiv 0.1(-\mu + 30)">
@@ -159,7 +160,7 @@ A schematic representation of an agent is given in Figure 2.
 
 ![Figure 2.](images/exteroceptive_layer_diagram.png)
 
-*Figure 2. A schematic representation of the agent with two layers: exteroceptive and underlying interoceptive layer. While interoceptive layer does all the 'hard job' of actually maintaining a temperature of an agent, exteroceptive layer infers the desired temperature based on the exteroceptive (change in light) information. This gives an agent more information about the world (and, importantly, information that can be obtained only from the external environment) while it still recruits and existing interoceptive model to maintain homeostasis.*
+*Figure 2. A schematic representation of the agent with two layers: exteroceptive and underlying interoceptive layer. While interoceptive layer does all the 'hard job' of actually maintaining a temperature of an agent, exteroceptive layer infers the desired temperature based on the exteroceptive (change in light) information. This gives an agent more information about the world (and, importantly, information that can be obtained only from the external environment) while it still recruits (and reuses) an existing interoceptive model to maintain homeostasis.*
 
 #### Results
 
@@ -170,9 +171,45 @@ The provided simulation (Figure 2) shows, how an agent can now effectively survi
 *Figure 3. An agent with exteroception. The world where an agent lives is assumed to experience a drop in light before temperature starts to drop and vise versa. An agent is extended to infer the desired temperature through the change in light. When light start to drop from the timestep 175, the desired temperature of the agent grows. This allows the agent to survive the following drop in temperature from the time steps 200 to 250.*
 
 ### Adding active exteroception
+#### Description
 Pezzulo et at. have proposed, that "at the higher levels of the hierarchy ... representations become *amodal or multimodal* – providing descending predictions in the exteroceptive, autonomic and proprioceptive domains". This extension aims to roughly implement this idea and show it's viability. 
 
 While our agent already has interoceptive and exteroceptive sensors, it can only act interoceptively (by setting the desired temperature based on exteroception and setting it's temperature change based on interoception). We can easily imagine a world, where adding exteroceptive action could be beneficial for our agent and which would make it more adaptive (an evolution would definitely do so eventually). We can now assume an agent lives in water environment. In this environment it observes more sunlight in warmer places (closer to the light) and less sunlight in colder places (further from the light). Now an agent equipped with this simple relationship thought a generative model show be able to act in the world and find better temperature regimes acting exteroceptively. In other words, it would seek to find such exteroceptive dynamics (change in light) that would better explain its brain variable (temperature change) through acting (setting the change in light). Here two things are worth a more detailed explanation. First, the right generative model would be such, that encodes the inverse relationship between the internal temperature change and change in light. This way our agent would seek darker places (less light) when its body gets hotter and vise versa. Second, and more importantly, it seems there is a big assumption when we say that the agent can change the light directly. Indeed, an agent is actually moving up and down in the water, which is what changing the light intensity. Out point here is that the agent (to some extent, see *Next steps*) does not need to know *how* it is changing the light intensity in order to control it! It only need to know *that* it has the ability to change the intensity of light. Now, how is it really changed is the task of the (underlying) reflex arc. While this reflex arc is out of the scope of the simulation at this step, it's important to stress that once the right command is given (from the higher level of the hierarchy), such reflex arc will perform it, leading, effectively, to the change in lighting. Summarising, an organism does not really need to know *how* the change in light it happens to *make* it happen at this level of abstraction.
+
+#### Model
+As proposed above, we extend an agent with a generative model of how its change in temperature <https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%7B%5Cmu%5E%7Bi%7D%7D%27" alt="{\mu^{i}}'"> generates the change in light over time <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdot%7BL%7D" alt='\dot{L}'>. We assume here that an agent has already learn (e.g. through evolution) that a change in light generates the change in temperature in a linear way: a rise change in temperature by *1°C* corresponds to drop in light by 1 conventional unit. It can be observed that the model is *inverse* by its nature. Indeed this makes sense as if an agent experiences a rise in temperature it would seek less light: going deeper will eventually make its temperature drop (and this is something an agent desires):
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cphi%20%3D%20g%28%5Cmu%29%20&plus;%20z%20%5Ctext%7B%2C%20where%20%7D%20g%28%5Cmu%29%20%5Cequiv%20-%7B%5Cmu%5E%7Bi%7D%7D%27" alt="\phi = g(\mu) + z \text{, where } g(\mu) \equiv -{\mu^{i}}''">
+
+Importantly, here we reuse the environmental variable <https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%7B%5Cmu%5E%7Bi%7D%7D%27" alt="{\mu^{i}}'"> (superscript *i* meaning interoceptive), namely the change in temperature which is already *provided* by the interoceptive layer of the hierarchy. In a sense, an agent *reuses* the recognition dynamics of the interoceptive layer. Laplace-encoded free energy, error terms and recognition dynamic of the agent would be then:
+
+*Laplace-encoded energy:*
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20E%28%5Cwidetilde%7B%5Cmu%7D%2C%20%5Cwidetilde%7B%5Cphi%7D%29%20%3D%20%5Cfrac%7B1%7D%7B2%7D%20%5Cleft%20%5B%20%5Cfrac%7B%7B%5Cvarepsilon_%7Bz%5B0%5D%7D%7D%5E%7B2%7D%7D%7B%7B%5Csigma_%7Bz%5B0%5D%7D%7D%5E%7B2%7D%7D%20&plus;%20%5Cfrac%7B%7B%5Cvarepsilon_%7Bw%5B0%5D%7D%7D%5E%7B2%7D%7D%7B%7B%5Csigma_%7Bw%5B0%5D%7D%7D%5E%7B2%7D%7D%20&plus;%20%5Cfrac%7B%7B%5Cvarepsilon_%7Bw%5B1%5D%7D%7D%5E%7B2%7D%7D%7B%7B%5Csigma_%7Bw%5B1%5D%7D%7D%5E%7B2%7D%7D%20%5Cright%20%5D" alt="E(\widetilde{\mu}, \widetilde{\phi}) = 
+\frac{1}{2}
+\left [ 
+\frac{{\varepsilon_{z[0]}}^{2}}{{\sigma_{z[0]}}^{2}} +
+\frac{{\varepsilon_{w[0]}}^{2}}{{\sigma_{w[0]}}^{2}} +
+\frac{{\varepsilon_{w[1]}}^{2}}{{\sigma_{w[1]}}^{2}}
+\right ]">
+
+*where error term for exteroceptive sense of change in light is:*
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cvarepsilon_%7Bz%5B0%5D%7D%20%3D%20%5Cphi%20-%20%28-%7B%5Cmu%5E%7Bi%7D%7D%27%29" alt="\varepsilon_{z[0]} = \phi - (-{\mu^{i}}')">
+
+and model errors <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cvarepsilon_%7Bz%5Bi%5D%7D" alt="\varepsilon_{z[i]}"> and variances <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Csigma_%7Bz%5Bi%5D%7D" alt="\sigma_{z[i]}"> are the same as in the interoceptive model.
+
+To provide an agent with the inverse model, as before we need to define how free energy will change with action:
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%5Cleft%20%5B%20%5Cfrac%7Bd%5Cphi%7D%7Bda%7D%20%5Cfrac%7B%5Cpartial%20E%7D%7B%5Cpartial%5Cphi%7D%20%5Cright%20%5D" alt="\dot{a} = -\kappa_{\alpha}\left [ \frac{d\phi}{da} \frac{\partial E}{\partial\phi} \right ]">
+
+This time the inverse model is <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cfrac%7Bd%5Cphi%7D%7Bda%7D" alt="\frac{d\phi}{da}" and as before the first term <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cfrac%7B%5Cpartial%20E%7D%7B%5Cpartial%5Cphi%7D" alt="\frac{\partial E}{\partial\phi}"> is calculated as a partial derivate of the Laplace-encoded free energy over the sensory information. As for now we assume an agent can change the light directly ignoring *how* it is done (discussion and the solution of this assumption follow below), <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cfrac%7Bd%5Cphi%7D%7Bda%7D" alt="\frac{d\phi}{da}" term becomes *1* and the dynamical update of the action can be formulated as:
+
+<img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%20%5Cfrac%7B%5Cvarepsilon_%7Bz%5B0%5D%7D%7D%7B%5Csigma_%7Bz%5B0%5D%7D%7D" alt="\dot{a} = -\kappa_{\alpha} \frac{\varepsilon_{z[0]}}{\sigma_{z[0]}}">
+
+#### Results
+
+The results of an agent acting both interoceptively and exteroceptively are shown in Figure 4.
 
 ![Figure 4.](images/exteroceptive_active_agent.png)
 
