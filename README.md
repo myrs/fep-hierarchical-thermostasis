@@ -105,7 +105,6 @@ where <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D
 \dot{a} = -\kappa_{\alpha} \frac{\varepsilon_{z[1]}}{\sigma_{z[1]}}
 \\\end{matrix}">
 
-
 #### Results
 From the provided simulation (Figure 1) it can be observed that an agent can effectively deal with changes of temperature (both constant and sudden) and maintain itself in a viable interval for most of the environmental disturbances. The twist comes from the fact that at time steps from 201 to 250 an agent experiences a change of -6 °C per step, while it can only regulate the temperature by +5.8 °C per step. This means, the temperature of an agent will be dropping (-0.2 °C per step) despite its affords, and eventually will go out of the viable boundaries (be less than 20 °C). Effectively and sadly, our agent would cease to exist.
 
@@ -206,6 +205,8 @@ To provide an agent with the inverse model, as before we need to define how free
 This time the inverse model is <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cfrac%7Bd%5Cphi%7D%7Bda%7D" alt="\frac{d\phi}{da}"> and as before the first term <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cfrac%7B%5Cpartial%20E%7D%7B%5Cpartial%5Cphi%7D" alt="\frac{\partial E}{\partial\phi}"> is calculated as a partial derivate of the Laplace-encoded free energy over the sensory information. As for now we assume an agent can change the light directly ignoring *how* this is done (discussion and the solution of this assumption follow below). This means that <img src="https://latex.codecogs.com/png.latex?%5Cinline%20%5Cdpi%7B120%7D%20%5Cfrac%7Bd%5Cphi%7D%7Bda%7D" alt="\frac{d\phi}{da}"> term becomes *1* and the minimisation of the free energy through action can be written as:
 
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cdot%7Ba%7D%20%3D%20-%5Ckappa_%7B%5Calpha%7D%20%5Cfrac%7B%5Cvarepsilon_%7Bz%5B0%5D%7D%7D%7B%5Csigma_%7Bz%5B0%5D%7D%7D" alt="\dot{a} = -\kappa_{\alpha} \frac{\varepsilon_{z[0]}}{\sigma_{z[0]}}">
+
+As in the simulated world this action will actually lead to the change in light, it will also affect the dynamics of the change of temperature <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cinline%20%5Cdot%7BT_e%7D" alt="\dot{T_e}"> **[TODO add link to formula]**. Effectively, it means our agent can now not only change its own temperature interoceptively, but also trough interaction with the environment, where this interaction is done by changing (i.e. resampling) the world our agent is situated in though action.
 
 #### Results
 
