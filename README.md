@@ -281,19 +281,22 @@ Finally, we can finish our predictive coding scheme implementation by subtractin
 
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cboldsymbol%7B%5Cphi%5E%7Bet%7D%7D%20%3D%20%5Cdot%7BL%7D%20-%200.1%20%5Cmu%5E%7Bpr%7D" alt="\boldsymbol{\phi^{et}} = \dot{L} - 0.1 \mu^{pr}">
 
+A schematic representation of the agent is given in Figure 6.
+![Figure 6.](images/full_agent_diagram.png)
+
 #### Results
 The results are shown in Figure 4, where it can be clearly seen that the agent is correctly inferring the desired temperature (cf. Figure 2) while also acting exteroceptively, changing its position in the environment and thus changing the desired level of light. I can be seen, that our agent now is more efficient in staying away from the boundaries of viability: by both resisting the change in temperature thought interoception and acting exteroceptively.
 
-![Figure 5.](images/proprioceptive_agent.png)
+![Figure 6.](images/proprioceptive_agent.png)
 
-*Figure 5. Proprioceptive agent with predictive coding. It is shown that an agent can now effectively differentiate what causes the change in light: environment or its own actions. This is done through proprioceptive layer generating prediction about change in light and applying predictive coding scheme between two exteroceptive layers rather than through an efference copy. The desired temperature is correctly inferred after timestep 175. After timestep 200 it can be observed how an agent regulates the temperature through acting in the world.*
+*Figure 6. Proprioceptive agent with predictive coding. It is shown that an agent can now effectively differentiate what causes the change in light: environment or its own actions. This is done through proprioceptive layer generating prediction about change in light and applying predictive coding scheme between two exteroceptive layers rather than through an efference copy. The desired temperature is correctly inferred after timestep 175. After timestep 200 it can be observed how an agent regulates the temperature through acting in the world.*
 
 #### Discussion
 While the proposed scheme works, it's not entirely clear why an agent produces small action even after the temperature change settles (after step 250). It seems like an agent's action update deviates from the proprioception (error) update. While proprioceptive sensory error is *0* and predicted by the proprioceptive layer change in light is *0* as well, an agent is performing a small amount of action. This action produces the change in light that is then explained by the level, inferring the desired temperature. While this change in temperature is effectively counter-acted by interoceptive action, it seems it should not be there in the first place. Next step would be to find why this effect appears and how it should be eliminated.
 
-![Figure 6.](images/action_error.png)
+![Figure 7.](images/action_error.png)
 
-*Figure 6. While there is no error in proprioceptive prediction, an agent is still acting. This produces the change in luminance (and, therefore, temperature) and makes the agent act interoceptively to maintain its temperature. This effect is undesirable and should be solved*
+*Figure 7. While there is no error in proprioceptive prediction, an agent is still acting. This produces the change in luminance (and, therefore, temperature) and makes the agent act interoceptively to maintain its temperature. This effect is undesirable and should be solved*
 
 ### Next steps
 Further steps would include adding more layers of hierarchy to allow conditioned (aka Pavlovian) and goal-directed behaviour an allowing an agent to move in the environment in order to be more adaptive.

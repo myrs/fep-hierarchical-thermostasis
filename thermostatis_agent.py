@@ -768,7 +768,8 @@ class ProprioceptiveAgent(ActiveExteroception):
         ExteroceptiveAgent.upd_action(self)
 
         # assume that agent can indicate the velocity directly (derivative is 0.1)
-        # TODO is it 0.1 or just 1?
+        # TODO is it 0.1 or just 1? * 0.1 * (self.pr_e_z_0[-1] / self.pr_s_z_0)
+        # !!TODO try a slower learning rate for action!
         upd = -self.learn_r_pr * 0.1 * (self.pr_e_z_0[-1] / self.pr_s_z_0)
         upd *= self.dt
         pr_action = self.pr_action[-1] + upd
