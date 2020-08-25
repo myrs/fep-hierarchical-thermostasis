@@ -281,8 +281,10 @@ Finally, we can finish our predictive coding scheme implementation by subtractin
 
 <img src="https://latex.codecogs.com/png.latex?%5Cdpi%7B120%7D%20%5Cboldsymbol%7B%5Cphi%5E%7Bet%7D%7D%20%3D%20%5Cdot%7BL%7D%20-%200.1%20%5Cmu%5E%7Bpr%7D" alt="\boldsymbol{\phi^{et}} = \dot{L} - 0.1 \mu^{pr}">
 
-A schematic representation of the agent is given in Figure 6.
-![Figure 6.](images/full_agent_diagram.png)
+A schematic representation of the agent is given in Figure 5.
+
+![Figure 5.](images/full_agent_diagram.png)
+*Figure 5. A schematic representation of an agent with interoception, exteroception, proprioception and predictive coding scheme.*
 
 #### Results
 The results are shown in Figure 4, where it can be clearly seen that the agent is correctly inferring the desired temperature (cf. Figure 2) while also acting exteroceptively, changing its position in the environment and thus changing the desired level of light. I can be seen, that our agent now is more efficient in staying away from the boundaries of viability: by both resisting the change in temperature thought interoception and acting exteroceptively.
