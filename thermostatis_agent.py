@@ -802,9 +802,10 @@ class ProprioceptiveAgent(ActiveExteroception):
         # TODO is it 0.1 or just 1? * 0.1 * (self.pr_e_z_0[-1] / self.pr_s_z_0)
         # !!TODO try a slower learning rate for action!
         upd = -self.learn_r_pr * 1 * (self.pr_e_z_0[-1] / self.pr_s_z_0)
+        upd += get_noise()
         upd *= self.dt
         # leaky integration
-        # pr_action = self.pr_action[-1] - self.pr_action[-1] * 0.05 * self.dt
+        # pr_action = self.pr_action[-1] - self.pr_action[-1] * 0.1 * self.dt + upd
         # add update
         pr_action = self.pr_action[-1] + upd
 
@@ -930,7 +931,7 @@ class ProprioceptiveAgent(ActiveExteroception):
         ax[0][1].plot(timeline, self.pr_e_z_0)
         ax[0][1].set_ylim(-10, 10)
         ax[0][1].set_title('Exteroception and proprioception errors')
-        ax[0][1].legend(['aex_e_z_0', 'e_z_0', 'e_w_0'], loc='upper right')
+        ax[0][1].legend(['aex_e_z_0', 'pr_e_z_0', 'e_w_0'], loc='upper right')
 
         ax[1][1].plot(timeline, self.temp_change[1:])
         ax[1][1].plot(timeline, self.pr_action[1:])
