@@ -129,6 +129,9 @@ class InteroceptiveAgent:
 
         self.temp_change.append(upd)
 
+    def upd_luminance_change(self):
+        pass
+
     def upd_err_z_0(self):
         # error between sensation and generated sensations
         self.e_z_0.append(self.sense[-1] - self.mu[-1])
@@ -283,6 +286,7 @@ class InteroceptiveAgent:
             self.update_world()
             self.upd_temp_change()
             self.upd_temp()
+            self.upd_luminance_change()
 
             # generate sensations
             self.generate_senses()
@@ -343,6 +347,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
 
         # exteroceptive sense
         self.luminance_change = [0]
+        self.luminance_change_const = [0]
         self.ex_sense = []
 
         # exteroceptive errors
@@ -356,11 +361,16 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         # variational free energy
         self.ex_vfe = []
 
+    def upd_luminance_change(self):
+        luminance_change = self.luminance_change_const[-1]
+        self.luminance_change.append(luminance_change)
+
     def generate_senses(self):
         super().generate_senses()
         self.generate_ex_sense()
 
     def generate_ex_sense(self):
+        # ex_sense = self.luminance_change[-1]
         ex_sense = self.luminance_change[-1] + get_noise()
         self.ex_sense.append(ex_sense)
 
@@ -424,12 +434,16 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         # of temperature over the whole time line
 
         # change in luminance starts before the temperature drop
-        if self.time >= 175 and self.time <= 225:
-            luminance_change = -0.7
+        if self.time == 175:
+            luminance_change_const = -0.7
+        elif self.time == 225:
+            luminance_change_const = 0
         else:
-            luminance_change = 0
+            luminance_change_const = self.luminance_change_const[-1]
 
-        self.luminance_change.append(luminance_change)
+        # luminance_change_const = 0
+
+        self.luminance_change_const.append(luminance_change_const)
 
     def active_inference(self):
         # exteroception first
@@ -497,6 +511,9 @@ class ActiveExteroception(ExteroceptiveAgent):
         self.aex_s_w_0 = aex_s_w_0
         self.aex_s_w_1 = aex_s_w_1
 
+        self.temp_action_change = [0]
+        self.luminance_action_change = [0]
+
         # action bound
         self.aex_action_bound = aex_action_bound
 
@@ -521,7 +538,16 @@ class ActiveExteroception(ExteroceptiveAgent):
         # luminance change is updated with action
         # changing the current luminance change
         if not self.supress_action:
-            self.luminance_change[-1] += self.aex_action[-1]
+            upd = self.aex_action[-1]
+            luminance_action_change = self.luminance_action_change[-1] + upd
+            self.luminance_action_change.append(luminance_action_change)
+
+
+    def upd_luminance_change(self):
+        super().upd_luminance_change()
+
+        self.luminance_change[-1] += self.luminance_action_change[-1]
+        
 
     def upd_temp_change(self):
         # for this simple agent temp_change is just action
@@ -529,17 +555,12 @@ class ActiveExteroception(ExteroceptiveAgent):
         super().upd_temp_change()
 
         if not self.supress_action:
-            # self.temp_change[-1] += -1 * self.aex_action[-1] / 1.0
-            # self.temp_change[-1] += 1 * self.aex_action[-1] / 1.0
+            upd = -self.aex_action[-1]
+            temp_action_change = self.temp_action_change[-1] + upd
+            self.temp_action_change.append(temp_action_change)
+            # self.temp_const_change[-1] += -self.aex_action[-1]
 
-            # update constant temperature change
-            # as we assume an agent moves through water
-            # and alters the effect of the constant temperature change
-            # produces by its current (new) position in the environment
-            action_2 = self.aex_action[-2] if len(self.aex_action) > 1 else 0
-            action = self.aex_action[-1] - action_2
-
-            self.temp_const_change[-1] += -action / 1.0
+        self.temp_change[-1] += self.temp_action_change[-1]
 
     def upd_aex_err_z_0(self):
         # error between sensation and generated sensations
@@ -635,9 +656,9 @@ class ActiveExteroception(ExteroceptiveAgent):
         ax[0][1].set_title('Exteroception and model error')
         ax[0][1].legend(['e_z_0', 'e_w_0', 'e_w_1'], loc='upper right')
 
-        ax[1][1].plot(timeline, self.temp_const_change[1:])
+        ax[1][1].plot(timeline, self.luminance_change[1:])
         ax[1][1].plot(timeline, self.aex_action[1:])
-        diff = np.array(self.temp_const_change[1:]) + np.array(self.aex_action[1:])
+        diff = np.array(self.luminance_change[1:]) + np.array(self.aex_action[1:])
         ax[1][1].plot(timeline, diff, lw=0.75, ls='--')
         ax[1][1].legend(['luminance change', 'action', 'diff'], loc='upper right')
         ax[1][1].set_title('Luminance change and action')
@@ -655,7 +676,7 @@ class ProprioceptiveAgent(ActiveExteroception):
        to predict how much of the observed change in light
        is explained away by proprioceptive feeling"""
 
-    def __init__(self, pr_s_z_0=0.01, pr_s_w_0=100000, learn_r_pr=None,
+    def __init__(self, pr_s_z_0=0.1, learn_r_pr=None,
                  pr_action_bound=10, supress_action=False,
                  supress_desired_temp_inference=False, **kwargs):
         super().__init__(**kwargs)
@@ -664,7 +685,6 @@ class ProprioceptiveAgent(ActiveExteroception):
 
         # sigma (variances)
         self.pr_s_z_0 = pr_s_z_0
-        self.pr_s_w_0 = pr_s_w_0
 
         self.pr_action_bound = pr_action_bound
         self.supress_action = supress_action
@@ -675,11 +695,9 @@ class ProprioceptiveAgent(ActiveExteroception):
 
         # proprioceptive errors
         self.pr_e_z_0 = []
-        self.pr_e_w_0 = []
 
         # brain state mu
         self.pr_mu = [0]
-        self.pr_mu_d1 = [0]
 
         self.pr_action = [0]
         self.pr_action_effect_on_luminance = []
@@ -697,27 +715,32 @@ class ProprioceptiveAgent(ActiveExteroception):
         # weighted by the variance of the error
         # and transformed to 'units' of proprioception
         # (in this case the transformation is 1:1)
-        light_change_error = 1 * (self.aex_e_z_0[-1] / self.aex_s_z_0)
+
+        # THIS seems to be the error! We can divide by variance
+        # or maybe we need to figure out where we compensate then
+        # light_change_error = 1 * (self.aex_e_z_0[-1] / self.aex_s_z_0)
+        light_change_error = self.aex_e_z_0[-1]
 
         # agent believes that changing velocity by 10
         # it can explain 10 units of light change error
         # generative model is 10 velocities are needed to change the light by 1
         # 1 velocity changes light by 0.1
         # if I move upward the light will increase
-        self.pr_e_z_0.append(light_change_error - (-0.1 * self.pr_mu[-1]))
-
-    def upd_pr_err_w_0(self):
-        # error between model and generation of model
-        # here: model of dynamics at 1st derivative (inferred velocity)
-        # and it's generation for the 1st derivative (generated velocity)
-        self.pr_e_w_0.append(self.pr_mu_d1[-1] - -self.pr_mu[-1])
+        # self.pr_e_z_0.append(light_change_error - (-0.1 * self.pr_mu[-1]))
+        self.pr_e_z_0.append(light_change_error - (-self.pr_mu[-1]))
 
     def upd_aex_err_z_0(self):
         # updated function for calculating
         # the sensory prediction error on the active exteroception layer
         # predictions about sensory data are dictated by the error
 
+        # predicted = self.ex_sense[-1] - 0.1 * (-self.ex_mu[-1] + 30)
         predicted = self.ex_sense[-1] - 0.1 * (-self.ex_mu[-1] + 30)
+        # predicted = self.ex_sense[-1]
+        # if self.time % 10:
+        #     print(predicted)
+
+        # self.aex_e_z_0.append(predicted - 1.0 * (-self.mu_d1[-1]))
         self.aex_e_z_0.append(predicted - 1.0 * (-self.mu_d1[-1]))
 
     def upd_ex_err_z_0(self):
@@ -729,26 +752,35 @@ class ProprioceptiveAgent(ActiveExteroception):
         # how an agent believes proprioception explains the light change
         # as the movement generated is inverse to the light change,
         # it needs to be without minus
-        proprioception_prediction = 0.1 * self.pr_mu[-1]
+        
+        # OPTION -- efference copy
+        proprioception_prediction = self.luminance_action_change[-1]
+        
+        # proprioception_prediction = 0
+
+        # proprioception_prediction = self.pr_mu[-1]
+        # proprioception_prediction = -self.pr_mu[-1] * 0.1
+        # proprioception_prediction = -self.aex_e_z_0[-1] if self.aex_e_z_0 else 0
+        # proprioception_prediction = self.aex_e_z_0[-1] if self.aex_e_z_0 else 0
+
+        # proprioception_prediction = 1.0 * (-self.mu_d1[-1]) + -self.aex_e_z_0[-1] if self.aex_e_z_0 else 0
+        # proprioception_prediction = self.pr_e_z_0[-1] if self.pr_e_z_0 else 0
+        # proprioception_prediction = self.pr_mu[-1]
+        
+        # if self.time % 10:
+        #     print('B', proprioception_prediction)
 
         # belief about how proprioception explains the light change
         # is now integrated in the exteroception error
         # on the layer inferring agent's desired temperature
+        # self.ex_e_z_0.append(proprioception_prediction
+        #                      - 0.1 * (-self.ex_mu[-1] + 30))
         self.ex_e_z_0.append(self.ex_sense[-1]
                              - 0.1 * (-self.ex_mu[-1] + 30)
                              - proprioception_prediction)
 
-    def upd_pr_mu_d1(self):
-        upd = -self.learn_r_pr * (self.pr_e_w_0[-1] / self.pr_s_w_0)
-        upd *= self.dt
-
-        self.pr_mu_d1.append(self.pr_mu_d1[-1] + upd)
-
     def upd_pr_mu(self):
-        upd = -self.learn_r_pr * \
-            (0.1 * self.pr_e_z_0[-1] / self.pr_s_z_0 +
-             self.pr_e_w_0[-1] / self.pr_s_w_0)
-        upd += self.pr_mu_d1[-2]
+        upd = -self.learn_r_pr * (self.pr_e_z_0[-1] / self.pr_s_z_0)
         upd *= self.dt
 
         self.pr_mu.append(self.pr_mu[-1] + upd)
@@ -757,8 +789,7 @@ class ProprioceptiveAgent(ActiveExteroception):
         def sqrd_err(err, sigma):
             return np.power(err, 2) / sigma
 
-        pr_vfe = 0.5 * (sqrd_err(self.pr_e_z_0[-1], self.pr_s_z_0) +
-                        sqrd_err(self.pr_e_w_0[-1], self.pr_s_w_0))
+        pr_vfe = 0.5 * (sqrd_err(self.pr_e_z_0[-1], self.pr_s_z_0))
 
         self.pr_vfe.append(pr_vfe)
 
@@ -770,13 +801,17 @@ class ProprioceptiveAgent(ActiveExteroception):
         # assume that agent can indicate the velocity directly (derivative is 0.1)
         # TODO is it 0.1 or just 1? * 0.1 * (self.pr_e_z_0[-1] / self.pr_s_z_0)
         # !!TODO try a slower learning rate for action!
-        upd = -self.learn_r_pr * 0.1 * (self.pr_e_z_0[-1] / self.pr_s_z_0)
+        upd = -self.learn_r_pr * 1 * (self.pr_e_z_0[-1] / self.pr_s_z_0)
         upd *= self.dt
+        # leaky integration
+        # pr_action = self.pr_action[-1] - self.pr_action[-1] * 0.05 * self.dt
+        # add update
         pr_action = self.pr_action[-1] + upd
 
         # action must be bound by some plausible constraints
         # e.g. can't move faster than some limit
         if abs(pr_action) > self.pr_action_bound:
+            print('out of bound')
             pr_action = np.sign(pr_action) * self.pr_action_bound
 
         # update action
@@ -791,10 +826,8 @@ class ProprioceptiveAgent(ActiveExteroception):
     def proprioception(self):
         #   --> update errors
         self.upd_pr_err_z_0()
-        self.upd_pr_err_w_0()
 
         #  --> update recognition dynamics
-        self.upd_pr_mu_d1()
         self.upd_pr_mu()
 
         #  update free energy
@@ -828,12 +861,20 @@ class ProprioceptiveAgent(ActiveExteroception):
             # translate action to actual change of environment
             # affect of action is translated to luminance change
             # TODO action is noisy! Add noise here but not forget about integration
-            action_effect_on_luminance = self.pr_action[-1] * 0.1
-            self.pr_action_effect_on_luminance.append(action_effect_on_luminance)
+            # action_effect_on_luminance = self.pr_action[-1] * 0.1
+            upd = self.pr_action[-1]
+            luminance_action_change = self.luminance_action_change[-1] + upd
+            self.luminance_action_change.append(luminance_action_change)
 
-            self.luminance_change[-1] += action_effect_on_luminance
+
+            # action_effect_on_luminance = self.pr_action[-1] 
+            # self.pr_action_effect_on_luminance.append(action_effect_on_luminance)
+
+            # self.luminance_change[-1] += action_effect_on_luminance
 
     def upd_temp_change(self):
+        ExteroceptiveAgent.upd_temp_change(self)
+
         if not self.supress_action:
             # temperature changes depending on the actual action taken
             # assumed relationship between luminance and temperature change is
@@ -842,19 +883,28 @@ class ProprioceptiveAgent(ActiveExteroception):
             # new way to update -- update constant temperature change
             # this the update represents an agent moving to a place in water
             # where constant temperature change is different
-            action_2 = self.pr_action_effect_on_luminance[-2] if len(
-                self.pr_action_effect_on_luminance) > 1 else 0
+            # action_2 = self.pr_action_effect_on_luminance[-2] if len(
+            #     self.pr_action_effect_on_luminance) > 1 else 0
 
-            action = self.pr_action_effect_on_luminance[-1] - action_2
-            self.temp_const_change[-1] += -action / 1.0
+            # action = self.pr_action_effect_on_luminance[-1] - action_2
+            # self.temp_const_change[-1] += -action / 1.0
+
+            # self.temp_const_change[-1] += -self.pr_action[-1]
+            # self.temp_const_change[-1] += -self.pr_action_effect_on_luminance[-1] / 1.0
 
             # old way to update temperature change -- updating temperature directly
             # but this way constant temperature change remains the same
             # self.temp_change[-1] += -1 * self.pr_action_effect_on_luminance[-1] / 1.0
 
-        upd = self.action[-1]
-        upd += self.temp_const_change[-1]
-        self.temp_change.append(upd)
+            upd = -self.pr_action[-1]
+            temp_action_change = self.temp_action_change[-1] + upd
+            self.temp_action_change.append(temp_action_change)
+
+        self.temp_change[-1] += self.temp_action_change[-1]
+
+        # upd = self.action[-1]
+        # upd += self.temp_const_change[-1]
+        # self.temp_change.append(upd)
 
     def plot_results(self):
         ExteroceptiveAgent.plot_results(self)
@@ -868,7 +918,6 @@ class ProprioceptiveAgent(ActiveExteroception):
         ax[0][0].set_title('Luminance change')
 
         ax[1][0].plot(timeline, self.pr_mu[1:])
-        ax[1][0].plot(timeline, self.pr_mu_d1[1:])
         ax[1][0].set_title('mu over time (inferred change in velocity)')
         ax[1][0].legend(['mu', 'mu\''], loc='upper right')
 
@@ -880,7 +929,6 @@ class ProprioceptiveAgent(ActiveExteroception):
 
         ax[0][1].plot(timeline, self.aex_e_z_0)
         ax[0][1].plot(timeline, self.pr_e_z_0)
-        ax[0][1].plot(timeline, self.pr_e_w_0)
         ax[0][1].set_ylim(-10, 10)
         ax[0][1].set_title('Exteroception and proprioception errors')
         ax[0][1].legend(['aex_e_z_0', 'e_z_0', 'e_w_0'], loc='upper right')
