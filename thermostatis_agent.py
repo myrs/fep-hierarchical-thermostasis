@@ -811,7 +811,6 @@ class ProprioceptiveAgent(ActiveExteroception):
         # action must be bound by some plausible constraints
         # e.g. can't move faster than some limit
         if abs(pr_action) > self.pr_action_bound:
-            print('out of bound')
             pr_action = np.sign(pr_action) * self.pr_action_bound
 
         # update action
