@@ -185,7 +185,9 @@ class InteroceptiveAgent:
 
         # total temperature change is change due to the environment
         # and change produced by the organism
-        temp_change = self.temp_change_environment[-1] + self.temp_change_action[-1]
+        # add noise
+        action = self.temp_change_action[-1] + get_noise() * self.dt
+        temp_change = self.temp_change_environment[-1] + action
 
         self.temp_change.append(temp_change)
 
