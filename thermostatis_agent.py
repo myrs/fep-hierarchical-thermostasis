@@ -401,7 +401,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
     """Exteroceptive agent that infers the desired temperature
        and passes it down to the interoceptive layer"""
 
-    def __init__(self, ex_s_z_0=0.01, ex_s_w_0=100000, **kwargs):
+    def __init__(self, ex_s_z_0=0.01, **kwargs):
         # variance is set to be very high for internal model
         # as it does not matter in this case
         super().__init__(**kwargs)
@@ -410,7 +410,6 @@ class ExteroceptiveAgent(InteroceptiveAgent):
 
         # sigma (variances)
         self.ex_s_z_0 = ex_s_z_0
-        self.ex_s_w_0 = ex_s_w_0
 
     def reset(self):
         super().reset()
@@ -421,7 +420,6 @@ class ExteroceptiveAgent(InteroceptiveAgent):
 
         # brain state mu
         self.ex_mu = [0]
-        self.ex_mu_d1 = [0]
 
         # variational free energy
         self.ex_vfe = []
@@ -439,23 +437,9 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         # error between sensation and generated sensations
         self.ex_e_z_0.append(self.ex_sense[-1] - 0.1 * (-self.ex_mu[-1] + 30))
 
-    def upd_ex_err_w_0(self):
-        # error between model and generation of model
-        # here: model of dynamics at 1st derivative
-        # and it's generation for the 1st derivative
-        self.ex_e_w_0.append(self.ex_mu_d1[-1] + self.ex_mu[-1])
-
-    def upd_ex_mu_d1(self):
-        upd = -self.learn_r_ex * (self.ex_e_w_0[-1] / self.ex_s_w_0)
-        upd *= self.dt
-
-        self.ex_mu_d1.append(self.ex_mu_d1[-1] + upd)
-
     def upd_ex_mu(self):
         upd = -self.learn_r_ex * \
-            (0.1 * self.ex_e_z_0[-1] / self.ex_s_z_0 +
-             self.ex_e_w_0[-1] / self.ex_s_w_0)
-        upd += self.ex_mu_d1[-2]
+            (0.1 * self.ex_e_z_0[-1] / self.ex_s_z_0)
         upd *= self.dt
 
         self.ex_mu.append(self.ex_mu[-1] + upd)
@@ -464,8 +448,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         def sqrd_err(err, sigma):
             return np.power(err, 2) / sigma
 
-        ex_vfe = 0.5 * (sqrd_err(self.ex_e_z_0[-1], self.ex_s_z_0) +
-                        sqrd_err(self.ex_e_w_0[-1], self.ex_s_w_0))
+        ex_vfe = 0.5 * (sqrd_err(self.ex_e_z_0[-1], self.ex_s_z_0))
 
         self.ex_vfe.append(ex_vfe)
 
@@ -477,10 +460,8 @@ class ExteroceptiveAgent(InteroceptiveAgent):
 
         #   --> update errors
         self.upd_ex_err_z_0()
-        self.upd_ex_err_w_0()
 
         #  --> update recognition dynamics
-        self.upd_ex_mu_d1()
         self.upd_ex_mu()
 
         #  update free energy
@@ -530,19 +511,17 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         ax[0].set_title('Light change')
 
         ax[1].plot(timeline, self.ex_mu[1:])
-        ax[1].plot(timeline, self.ex_mu_d1[1:])
-        ax[1].set_title('mu over time (inferred desired temperature)')
-        ax[1].legend(['mu', 'mu\''], loc='upper right')
+        ax[1].set_title('$\\mu$ over time (inferred desired temperature)')
+        ax[1].legend(['$\\mu$'], loc='upper right')
 
         ax[2].plot(timeline, self.ex_vfe)
         ax[2].set_title('Exteroception VFE')
         ax[2].set_ylim(-0.1, 500)
 
         ax[3].plot(timeline, self.ex_e_z_0)
-        ax[3].plot(timeline, self.ex_e_w_0)
         ax[3].set_ylim(-10, 10)
         ax[3].set_title('Exteroception error')
-        ax[3].legend(['e_z_0', 'e_w_0', ], loc='upper right')
+        ax[3].legend(['e_z_0'], loc='upper right')
 
         plt.show()
 
@@ -635,8 +614,6 @@ class ActiveExteroception(ExteroceptiveAgent):
         # self.aex_e_w_0.append(self.sense_d1[-1] - self.temp_change_action[-1] - self.mu_d1[-1] - self.aex_mu[-1])
         
         self.aex_e_w_0.append(self.sense_d1[-1] - self.temp_change_action[-1] - self.aex_mu[-1])
-        
-        # self.aex_e_w_0.append(self.mu_d2[-1] - self.aex_mu[-1])
 
     def upd_aex_err_z_0(self):
         """ error between sensation and generated sensation
