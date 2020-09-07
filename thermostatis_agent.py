@@ -109,8 +109,6 @@ class InteroceptiveAgent:
         # a temperature changes at each timestep
         # at some time this rate of change can be adjusted
 
-        # TODO integrate it for I second?
-
         if self.time == 50:
             # jump to 2
             new_temp_chage_desired = 3
@@ -342,6 +340,7 @@ class InteroceptiveAgent:
 
     def simulate(self, sim_time=300, act_time=50):
         self.reset()
+        self.act_time = act_time
 
         plt.ion()
 
@@ -597,6 +596,10 @@ class ActiveExteroception(ExteroceptiveAgent):
 
     def update_world(self):
         super().update_world()
+
+        if self.time < self.act_time:
+            self.velocity_action.append(0)
+            return
 
         if not self.supress_action:
             self.velocity_action.append(self.aex_action[-1] + get_noise())
