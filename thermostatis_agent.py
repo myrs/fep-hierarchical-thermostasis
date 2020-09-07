@@ -471,9 +471,8 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         # update world as in Interoceptive Agent
         super().update_world()
 
-        # test -- only less light before temperature drop
-        # TODO change the light corresponding to the change
-        # of temperature over the whole time line
+        # simulate light drop before temperature drop
+        # for a short period of time to show the proof of concept
 
         # change in light starts before the temperature drop
         if int(self.time) == 175:
@@ -584,6 +583,12 @@ class ActiveExteroception(ExteroceptiveAgent):
 
         if not self.supress_action:
             self.velocity_action.append(self.aex_action[-1] + get_noise())
+
+    def upd_ex_err_z_0(self):
+        # error between sensation and generated sensations
+        prediction = self.velocity_action[-1]
+
+        self.ex_e_z_0.append(self.ex_sense[-1] - 0.1 * (-self.ex_mu[-1] + 30) - prediction)
 
     def upd_aex_mu(self):
         upd = -self.learn_r_ex * \
