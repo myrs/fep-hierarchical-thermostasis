@@ -626,9 +626,9 @@ class ActiveExteroception(ExteroceptiveAgent):
         # setting point is when the inferred change int light
         # corresponds to the change in temperature
 
-        # prediction = self.sense_d1[-1] - self.temp_change_action[-1]
-        prediction = self.sense_d1[-1] - self.mu_d1[-1]
-        self.aex_e_w_0.append(self.aex_mu_d1[-1] - prediction + self.aex_mu[-1])
+        t_change_goal = self.sense_d1[-1] - self.temp_change_action[-1]
+        # t_change_goal = self.sense_d1[-1] - self.mu_d1[-1]
+        self.aex_e_w_0.append(self.aex_mu_d1[-1] - t_change_goal + self.aex_mu[-1])
 
     def upd_aex_err_z_0(self):
         """ error between sensation and generated sensation
