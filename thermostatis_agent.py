@@ -4,6 +4,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+from utils import running_mean
 
 def get_noise(scale=0.1, positive=False):
     noise = np.random.normal() * scale
@@ -90,6 +91,7 @@ class InteroceptiveAgent:
         self.mu_d2 = [0]
 
         # variational free energy
+        self.vfe_i = []
         self.vfe = []
 
     def generate_senses(self):
@@ -124,7 +126,7 @@ class InteroceptiveAgent:
             new_temp_chage_desired = -1
         elif self.time == 200:
             # jump to -6
-            new_temp_chage_desired = -6.5
+            new_temp_chage_desired = -6
         elif self.time == 250:
             # jump to 0
             new_temp_chage_desired = 0
@@ -250,16 +252,16 @@ class InteroceptiveAgent:
 
         self.mu.append(self.mu[-1] + upd)
 
-    def upd_vfe(self):
+    def upd_vfe_i(self):
         def sqrd_err(err, sigma):
             return np.power(err, 2) / sigma
 
-        vfe = 0.5 * (sqrd_err(self.e_z_0[-1], self.s_z_0) +
-                     sqrd_err(self.e_z_1[-1], self.s_z_1) +
-                     sqrd_err(self.e_w_0[-1], self.s_w_0) +
-                     sqrd_err(self.e_w_1[-1], self.s_w_1))
+        vfe_i = 0.5 * (sqrd_err(self.e_z_0[-1], self.s_z_0) +
+                       sqrd_err(self.e_z_1[-1], self.s_z_1) +
+                       sqrd_err(self.e_w_0[-1], self.s_w_0) +
+                       sqrd_err(self.e_w_1[-1], self.s_w_1))
 
-        self.vfe.append(vfe)
+        self.vfe_i.append(vfe_i)
 
     def upd_action(self):
         # TODO action is noisy! Add noise here but not forget about integration
@@ -294,60 +296,87 @@ class InteroceptiveAgent:
         self.upd_mu()
 
         #  update free energy
-        self.upd_vfe()
+        self.upd_vfe_i()
 
     def active_inference(self):
         self.temp_desire.append(self.temp_viable_mean)
         self.interoception()
+
+    def upd_vfe(self):
+        self.vfe.append(self.vfe_i[-1])
 
     def plot_results(self):
         fig, ax = plt.subplots(3, 2, constrained_layout=True)
 
         timeline = [s * self.dt for s in range(self.steps)]
 
-        ax[0][0].plot(timeline, self.temp[1:])
-        ax[0][0].plot(timeline, self.temp_desire[1:], ls='--', lw=0.75, c='green')
-        ax[0][0].set_title('Organism temperature')
+        # Temperature
         min_temp = self.temp_viable_mean - self.temp_viable_range
         max_temp = self.temp_viable_mean + self.temp_viable_range
+        ax[0][0].plot(timeline, self.temp[1:])
+        ax[0][0].plot(timeline, self.temp_desire[1:], ls='--', lw=0.75, c='green')
+        ax[0][0].set_title('Temperature')
+        ax[0][0].set_xlabel('time step')
+        ax[0][0].set_ylabel('temperature')
         ax[0][0].plot(timeline, np.ones_like(timeline) *
                       min_temp, lw=0.75, ls='--', c='red')
         ax[0][0].plot(timeline, np.ones_like(timeline) *
                       max_temp, lw=0.75, ls='--', c='red')
-        ax[0][0].legend(['temp', 'desired temp', 'viable range'], loc='lower left')
-        ax[0][0].set_ylim(10, 45)
+        ax[0][0].legend(['agent, $T$', 'goal, $T_{goal}$', 'viability'],
+                        loc='upper right')
+        ax[0][0].set_ylim(10, 50)
+        ax[0][0].set_xlim(-10, self.time + 30)
 
-        ax[1][0].plot(timeline, self.temp_change[1:])
-        ax[1][0].plot(timeline, np.zeros_like(timeline), lw=0.75, ls='--')
-        ax[1][0].set_title('Organism temperature change')
-
-        ax[2][0].plot(timeline, self.temp_change_environment[1:])
-        ax[2][0].plot(timeline, self.temp_change_action[1:])
-        diff = np.array(self.temp_change_environment[1:]) + \
+        # Temperature change
+        temp_change_organism = np.array(self.temp_change_environment[1:]) + \
             np.array(self.temp_change_action[1:])
-        ax[2][0].plot(timeline, diff, lw=0.75, ls='--')
-        ax[2][0].legend(['temp change', 'action', 'diff'], loc='upper right')
-        ax[2][0].set_title('External temperature change and action')
+        ax[1][0].plot(timeline, self.temp_change_environment[1:])
+        ax[1][0].plot(timeline, self.temp_change_action[1:])
+        ax[1][0].plot(timeline, temp_change_organism, lw=1.25, ls='--', c='g')
+        ax[1][0].plot(timeline, np.ones_like(timeline) * 0, lw=0.65, c='gray')
+        ax[1][0].legend(['env-t, $\\dot{T}_e$', 'action, $\\dot{T}_i$',
+                         'agent, $\\dot{T}$'],
+                        loc='upper right',
+                        labelspacing=0.3)
+        ax[1][0].set_title('Temperature change')
+        ax[1][0].set_xlabel('time step')
+        ax[1][0].set_ylabel('temperature change')
+        ax[1][0].set_ylim(-8, 8)
+        ax[1][0].set_xlim(-10, self.time + 30)
+
+        # Light change
+        ax[2][0].plot(timeline, self.light_change[1:])
+        ax[2][0].set_title('Light change, $\\dot{L}$')
+        ax[2][0].set_xlabel('time step')
+        ax[2][0].set_ylabel('$\\dot{L}$')
 
         ax[0][1].plot(timeline, self.mu[1:])
         ax[0][1].plot(timeline, self.mu_d1[1:])
         ax[0][1].plot(timeline, self.mu_d2[1:])
-        ax[0][1].set_title('mu over time')
-        ax[0][1].legend(['mu', 'mu\'', 'mu\'\''], loc='upper right')
+        ax[0][1].set_title('$\\mu_i$ over time')
+        ax[0][1].set_xlabel('time step')
+        ax[0][1].set_ylabel('$\\mu_i$')
+        ax[0][1].legend(['$\\mu_i$', "$\\mu_i'$", "$\\mu_i''$"], loc='upper right')
 
-        ax[1][1].plot(timeline, self.vfe)
-        ax[1][1].set_title('VFE')
+        # VFE
+        ax[1][1].plot(timeline, running_mean(self.vfe), lw=3)
+        ax[1][1].set_title('Variational free energy (VFE), $F$')
+        ax[1][1].set_xlabel('time step')
+        ax[1][1].set_ylabel('VFE, $F$')
         ax[1][1].set_ylim(-0.1, 500)
 
-        ax[2][1].plot(timeline, self.e_z_0)
-        ax[2][1].plot(timeline, self.e_z_1)
-        ax[2][1].plot(timeline, self.e_w_0)
-        ax[2][1].plot(timeline, self.e_w_1)
+        # Error terms
+        ax[2][1].plot(timeline, self.e_z_0, lw=0.75)
+        ax[2][1].plot(timeline, self.e_z_1, lw=0.75)
+        ax[2][1].plot(timeline, self.e_w_0, lw=0.75)
+        ax[2][1].plot(timeline, self.e_w_1, lw=0.75)
         ax[2][1].set_ylim(-10, 10)
-        ax[2][1].set_title('Error')
-        ax[2][1].legend(['e_z_0', 'e_z_1', 'e_w_0', 'e_w_1'], loc='upper right')
+        ax[2][1].set_title('Error terms')
+        ax[2][1].set_ylabel('error')
+        ax[2][1].legend(['$e_{z0}$', '$e_{z1}$', '$e_{w0}$',
+                         '$e_{w1}$'], loc='upper right')
 
-        plt.show()
+        return ax
 
     def simulate(self, sim_time=300, act_time=50):
         self.reset()
@@ -373,6 +402,9 @@ class InteroceptiveAgent:
             # perform active inference
             self.active_inference()
 
+            # update variational free energy
+            self.upd_vfe()
+
             #  act
             if step * self.dt > act_time:
                 self.upd_action()
@@ -381,29 +413,7 @@ class InteroceptiveAgent:
                 self.upd_no_action()
 
         self.plot_results()
-
-
-class MockExteroceptiveAgent(InteroceptiveAgent):
-    """Proof of concept of the exteroceptive agent:
-       desired temperature is set directly"""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def exteroception(self):
-        # an agent sets it's desired temperature
-        # based on exteroception
-        # mocking exteroceptive inference
-        if self.time >= 120 and self.time <= 200:
-            # set the temperature high enough to survive upcoming cold
-            self.temp_desire.append(self.temp_viable_mean + 7)
-        else:
-            self.temp_desire.append(self.temp_viable_mean)
-
-    def active_inference(self):
-        # update exteroception
-        self.exteroception()
-        self.interoception()
+        plt.show()
 
 
 class ExteroceptiveAgent(InteroceptiveAgent):
@@ -429,7 +439,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         self.ex_mu = [0]
 
         # variational free energy
-        self.ex_vfe = []
+        self.vfe_ex = []
 
     def generate_senses(self):
         super().generate_senses()
@@ -451,13 +461,17 @@ class ExteroceptiveAgent(InteroceptiveAgent):
 
         self.ex_mu.append(self.ex_mu[-1] + upd)
 
-    def upd_ex_vfe(self):
+    def upd_vfe_ex(self):
         def sqrd_err(err, sigma):
             return np.power(err, 2) / sigma
 
-        ex_vfe = 0.5 * (sqrd_err(self.ex_e_z_0[-1], self.ex_s_z_0))
+        vfe_ex = 0.5 * (sqrd_err(self.ex_e_z_0[-1], self.ex_s_z_0))
 
-        self.ex_vfe.append(ex_vfe)
+        self.vfe_ex.append(vfe_ex)
+
+    def upd_vfe(self):
+        vfe = self.vfe_i[-1] + self.vfe_ex[-1]
+        self.vfe.append(vfe)
 
     def exteroception(self):
         # an agents performs exteroception
@@ -472,7 +486,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         self.upd_ex_mu()
 
         #  update free energy
-        self.upd_ex_vfe()
+        self.upd_vfe_ex()
 
     def update_world(self):
         # update world as in Interoceptive Agent
@@ -485,7 +499,8 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         if int(self.time) == 175:
             # change by -0.7 (to -0.7)
             light_change_instant = -0.7
-        elif int(self.time) == 225:
+        elif int(self.time) == 200:
+        # elif int(self.time) == 225:
             # change by +0.7 (to 0)
             light_change_instant = 0.7
         else:
@@ -506,30 +521,23 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         self.interoception()
 
     def plot_results(self):
-        super().plot_results()
-
-        fig, ax = plt.subplots(4, 1, constrained_layout=True)
+        ax = super().plot_results()
 
         timeline = [s * self.dt for s in range(self.steps)]
 
-        # change in light
-        ax[0].plot(timeline, self.light_change[1:])
-        ax[0].set_title('Light change')
+        ax[0][1].plot(timeline, self.ex_mu[1:], ls='--')
+        ax[0][1].legend(['$\\mu_i$', "$\\mu_i'$", "$\\mu_i''$",
+                         "$\\mu_e$"], loc='upper right')
 
-        ax[1].plot(timeline, self.ex_mu[1:])
-        ax[1].set_title('$\\mu$ over time (inferred desired temperature)')
-        ax[1].legend(['$\\mu$'], loc='upper right')
+        ax[1][1].plot(timeline, running_mean(self.vfe_i, 5), lw=1)
+        ax[1][1].plot(timeline, running_mean(self.vfe_ex), lw=1)
+        ax[1][1].legend(['VFE', 'VFE_i', 'VFE_e'])
 
-        ax[2].plot(timeline, self.ex_vfe)
-        ax[2].set_title('Exteroception VFE')
-        ax[2].set_ylim(-0.1, 500)
+        ax[2][1].plot(timeline, self.ex_e_z_0, lw=0.75)
+        ax[2][1].legend(['$\\epsilon^{z0}_i$', '$\\epsilon^{z1}_i$', '$\\epsilon^{w0}_i$',
+                         '$\\epsilon^{w1}_i$', '$\\epsilon^{z0}_e$'], loc='upper right')
 
-        ax[3].plot(timeline, self.ex_e_z_0)
-        ax[3].set_ylim(-10, 10)
-        ax[3].set_title('Exteroception error')
-        ax[3].legend(['e_z_0'], loc='upper right')
-
-        plt.show()
+        return ax
 
 
 class ActiveExteroception(ExteroceptiveAgent):
@@ -577,7 +585,7 @@ class ActiveExteroception(ExteroceptiveAgent):
         self.aex_mu_d1 = [0]
 
         # variational free energy
-        self.aex_vfe = []
+        self.avfe_ex = []
 
         # action
         self.aex_action = [0]
@@ -615,6 +623,7 @@ class ActiveExteroception(ExteroceptiveAgent):
         # error between sensation and generated sensations
         # prediction = self.velocity_action[-1]
         prediction = self.ex_sense[-1] - self.aex_action[-1]
+        # prediction = self.ex_sense[-1]
         # prediction = self.ex_sense[-1] - self.aex_action_pre_bound[-1]
         # prediction = 0
 
@@ -642,16 +651,16 @@ class ActiveExteroception(ExteroceptiveAgent):
         # error = self.ex_sense[-1]
         self.aex_e_z_0.append(error - (-self.aex_mu[-1]))
 
-    def upd_aex_vfe(self):
+    def upd_avfe_ex(self):
         def sqrd_err(err, sigma):
             return np.power(err, 2) / sigma
 
         # vfe is very similar to interoception, but precision is set
         # for exteroception case
-        aex_vfe = 0.5 * (sqrd_err(self.aex_e_z_0[-1], self.aex_s_z_0)
+        avfe_ex = 0.5 * (sqrd_err(self.aex_e_z_0[-1], self.aex_s_z_0)
                          + sqrd_err(self.aex_e_w_0[-1], self.aex_s_w_0))
 
-        self.aex_vfe.append(aex_vfe)
+        self.avfe_ex.append(avfe_ex)
 
     def upd_action(self):
         super().upd_action()
@@ -688,7 +697,7 @@ class ActiveExteroception(ExteroceptiveAgent):
         self.upd_aex_err_w_0()
 
         # update free energy
-        self.upd_aex_vfe()
+        self.upd_avfe_ex()
 
     def active_inference(self):
         # exteroception first
@@ -706,38 +715,31 @@ class ActiveExteroception(ExteroceptiveAgent):
         self.active_exteroception()
 
     def plot_results(self):
-        super().plot_results()
-
-        fig, ax = plt.subplots(3, 2, constrained_layout=True)
+        ax = super().plot_results()
 
         timeline = [s * self.dt for s in range(self.steps)]
 
+        # ax[2][0].plot(timeline, self.velocity[1:])
+        # ax[2][0].set_title('velocity')
+
         # change in light
-        ax[0][0].plot(timeline, self.light_change[1:])
-        ax[0][0].set_title('Light change')
+        ax[0][1].plot(timeline, self.aex_mu[1:])
+        ax[0][1].legend(['$\\mu_i$', "$\\mu_i'$", "$\\mu_i''$",
+                         "$\\mu_e$", '$\\mu_a$'], loc='upper right')
 
-        ax[1][0].plot(timeline, self.aex_mu[1:])
-        ax[1][0].set_title('$\\mu$ over time \n(inferred external temperature change)')
-        ax[1][0].legend(['$\\mu$'], loc='upper right')
 
-        ax[2][0].plot(timeline, self.velocity[1:])
-        ax[2][0].set_title('velocity')
+        ax[2][1].plot(timeline, self.aex_e_z_0[1:])
+        ax[2][1].plot(timeline, self.aex_e_w_0[1:])
+        ax[2][1].legend(['$\\epsilon^{z0}_i$', '$\\epsilon^{z1}_i$', '$\\epsilon^{w0}_i$',
+                         '$\\epsilon^{w1}_i$', '$\\epsilon^{z0}_e$',
+                         '$\\epsilon^{z0}_a$', '$\\epsilon^{w0}_a$'], 
+                         loc='upper right',
+                         labelspacing=0)
 
-        ax[0][1].plot(timeline, self.aex_vfe)
-        ax[0][1].set_title('Active Exteroception VFE')
-        ax[0][1].set_ylim(-0.1, 500)
+        ax[2][0].plot(timeline, self.aex_action[1:])
+        ax[2][0].legend(['$\\dot{L}$', '$\\dot{L}_a$'])
 
-        ax[1][1].plot(timeline, self.aex_e_z_0[1:])
-        ax[1][1].plot(timeline, self.aex_e_w_0[1:])
-        ax[1][1].set_ylim(-10, 10)
-        ax[1][1].set_title('Exteroception and model error')
-        ax[1][1].legend(['aex_z_0', 'aex_w_0'], loc='upper right')
-
-        ax[2][1].plot(timeline, self.light_change[1:])
-        ax[2][1].plot(timeline, self.aex_action[1:])
-        diff = np.array(self.light_change[1:]) + np.array(self.aex_action[1:])
-        ax[2][1].plot(timeline, diff, lw=0.75, ls='--')
-        ax[2][1].legend(['light change', 'action', 'diff'], loc='upper right')
-        ax[2][1].set_title('Light change and action')
+        ax[1][1].plot(timeline, running_mean(self.avfe_ex), lw=1)
+        ax[1][1].legend(['VFE', 'VFE_i', 'VFE_e', 'VFE_a'])
 
         plt.show()
