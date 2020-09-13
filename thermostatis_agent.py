@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 
 from utils import running_mean
 
+
 def get_noise(scale=0.1, positive=False):
     noise = np.random.normal() * scale
     if positive:
@@ -345,36 +346,38 @@ class InteroceptiveAgent:
         ax[1][0].set_xlim(-10, self.time + 30)
 
         # Light change
-        ax[2][0].plot(timeline, self.light_change[1:])
-        ax[2][0].set_title('Light change, $\\dot{L}$')
+        ax[2][0].plot(timeline, running_mean(self.light_change[1:]), lw=2)
+        ax[2][0].set_title('Light change')
         ax[2][0].set_xlabel('time step')
-        ax[2][0].set_ylabel('$\\dot{L}$')
+        ax[2][0].set_ylabel('light change')
+        ax[2][0].legend(['total, $\\dot{L}$'], loc='lower right')
 
         ax[0][1].plot(timeline, self.mu[1:])
         ax[0][1].plot(timeline, self.mu_d1[1:])
         ax[0][1].plot(timeline, self.mu_d2[1:])
-        ax[0][1].set_title('$\\mu_i$ over time')
+        ax[0][1].set_title('environmental variable, $\\mu_i$')
         ax[0][1].set_xlabel('time step')
-        ax[0][1].set_ylabel('$\\mu_i$')
+        ax[0][1].set_ylabel('$\\mu$')
         ax[0][1].legend(['$\\mu_i$', "$\\mu_i'$", "$\\mu_i''$"], loc='upper right')
 
         # VFE
-        ax[1][1].plot(timeline, running_mean(self.vfe), lw=3)
+        ax[1][1].plot(timeline, running_mean(self.vfe), lw=3, c="#3f92d2")
         ax[1][1].set_title('Variational free energy (VFE), $F$')
         ax[1][1].set_xlabel('time step')
-        ax[1][1].set_ylabel('VFE, $F$')
-        ax[1][1].set_ylim(-0.1, 500)
+        ax[1][1].set_ylabel('$F$')
+        ax[1][1].set_ylim(-5, 500)
 
         # Error terms
-        ax[2][1].plot(timeline, self.e_z_0, lw=0.75)
-        ax[2][1].plot(timeline, self.e_z_1, lw=0.75)
-        ax[2][1].plot(timeline, self.e_w_0, lw=0.75)
-        ax[2][1].plot(timeline, self.e_w_1, lw=0.75)
+        ax[2][1].plot(timeline, running_mean(self.e_z_0), lw=0.75)
+        ax[2][1].plot(timeline, running_mean(self.e_z_1), lw=0.75)
+        ax[2][1].plot(timeline, running_mean(self.e_w_0), lw=0.75)
+        ax[2][1].plot(timeline, running_mean(self.e_w_1), lw=0.75)
         ax[2][1].set_ylim(-10, 10)
-        ax[2][1].set_title('Error terms')
-        ax[2][1].set_ylabel('error')
-        ax[2][1].legend(['$e_{z0}$', '$e_{z1}$', '$e_{w0}$',
-                         '$e_{w1}$'], loc='upper right')
+        ax[2][1].set_title('Error terms, $\\epsilon$')
+        ax[2][1].set_xlabel('time step')
+        ax[2][1].set_ylabel('$\\epsilon$')
+        ax[2][1].legend(['$\\epsilon_{z0}$', '$\\epsilon_{z1}$', '$\\epsilon_{w0}$',
+                         '$\\epsilon_{w1}$'], loc='upper right')
 
         return ax
 
@@ -500,7 +503,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
             # change by -0.7 (to -0.7)
             light_change_instant = -0.7
         elif int(self.time) == 200:
-        # elif int(self.time) == 225:
+            # elif int(self.time) == 225:
             # change by +0.7 (to 0)
             light_change_instant = 0.7
         else:
@@ -529,13 +532,15 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         ax[0][1].legend(['$\\mu_i$', "$\\mu_i'$", "$\\mu_i''$",
                          "$\\mu_e$"], loc='upper right')
 
-        ax[1][1].plot(timeline, running_mean(self.vfe_i, 5), lw=1)
-        ax[1][1].plot(timeline, running_mean(self.vfe_ex), lw=1)
-        ax[1][1].legend(['VFE', 'VFE_i', 'VFE_e'])
+        ax[1][1].plot(timeline, running_mean(self.vfe_i, 5), lw=1, c='tab:red')
+        ax[1][1].plot(timeline, running_mean(self.vfe_ex), lw=1, c='tab:pink')
+        ax[1][1].legend(['$F$', '$F_i$', '$F_e$'], loc='upper right')
+        ax[1][1].set_ylim(-10, 200)
 
-        ax[2][1].plot(timeline, self.ex_e_z_0, lw=0.75)
+        ax[2][1].plot(timeline, running_mean(self.ex_e_z_0), lw=0.75)
         ax[2][1].legend(['$\\epsilon^{z0}_i$', '$\\epsilon^{z1}_i$', '$\\epsilon^{w0}_i$',
                          '$\\epsilon^{w1}_i$', '$\\epsilon^{z0}_e$'], loc='upper right')
+        ax[2][1].set_ylim(-5, 5)
 
         return ax
 
@@ -585,7 +590,7 @@ class ActiveExteroception(ExteroceptiveAgent):
         self.aex_mu_d1 = [0]
 
         # variational free energy
-        self.avfe_ex = []
+        self.vfe_aex = []
 
         # action
         self.aex_action = [0]
@@ -657,10 +662,14 @@ class ActiveExteroception(ExteroceptiveAgent):
 
         # vfe is very similar to interoception, but precision is set
         # for exteroception case
-        avfe_ex = 0.5 * (sqrd_err(self.aex_e_z_0[-1], self.aex_s_z_0)
+        vfe_aex = 0.5 * (sqrd_err(self.aex_e_z_0[-1], self.aex_s_z_0)
                          + sqrd_err(self.aex_e_w_0[-1], self.aex_s_w_0))
 
-        self.avfe_ex.append(avfe_ex)
+        self.vfe_aex.append(vfe_aex)
+
+    def upd_vfe(self):
+        vfe = self.vfe_i[-1] + self.vfe_ex[-1] + self.vfe_aex[-1]
+        self.vfe.append(vfe)
 
     def upd_action(self):
         super().upd_action()
@@ -723,23 +732,29 @@ class ActiveExteroception(ExteroceptiveAgent):
         # ax[2][0].set_title('velocity')
 
         # change in light
-        ax[0][1].plot(timeline, self.aex_mu[1:])
+        ax[0][1].plot(timeline, self.aex_mu[1:], ls='--')
         ax[0][1].legend(['$\\mu_i$', "$\\mu_i'$", "$\\mu_i''$",
                          "$\\mu_e$", '$\\mu_a$'], loc='upper right')
 
-
-        ax[2][1].plot(timeline, self.aex_e_z_0[1:])
-        ax[2][1].plot(timeline, self.aex_e_w_0[1:])
+        ax[2][1].plot(timeline, running_mean(self.aex_e_z_0[1:]), lw=0.75)
+        ax[2][1].plot(timeline, running_mean(self.aex_e_w_0[1:]), lw=0.75)
         ax[2][1].legend(['$\\epsilon^{z0}_i$', '$\\epsilon^{z1}_i$', '$\\epsilon^{w0}_i$',
                          '$\\epsilon^{w1}_i$', '$\\epsilon^{z0}_e$',
-                         '$\\epsilon^{z0}_a$', '$\\epsilon^{w0}_a$'], 
-                         loc='upper right',
-                         labelspacing=0)
+                         '$\\epsilon^{z0}_a$', '$\\epsilon^{w0}_a$'],
+                        loc='upper right',
+                        labelspacing=0)
+        ax[2][1].set_ylim(-3.5, 3.5)
 
-        ax[2][0].plot(timeline, self.aex_action[1:])
-        ax[2][0].legend(['$\\dot{L}$', '$\\dot{L}_a$'])
+        # action actually produced by the organism (including environmental noise)
+        # light_change_env = np.array(self.velocity) - np.array(self.velocity_action)
+        light_change_env = np.array(self.light_change) - np.array(self.velocity_action)
+        ax[2][0].plot(timeline, running_mean(self.velocity_action[1:]), lw=0.75)
+        ax[2][0].plot(timeline, running_mean(light_change_env[1:]), lw=0.85, c='tab:red', ls='--')
+        ax[2][0].legend(['total, $\\dot{L}$', 'action, $\\dot{L}_a$', 'env-t, $\\dot{L}_e$'],
+                        loc='lower right')
 
-        ax[1][1].plot(timeline, running_mean(self.avfe_ex), lw=1)
-        ax[1][1].legend(['VFE', 'VFE_i', 'VFE_e', 'VFE_a'])
+        ax[1][1].plot(timeline, running_mean(self.vfe_aex), lw=1, c="tab:orange")
+        ax[1][1].legend(['$F$', '$F_i$', '$F_e$', '$F_a$'])
+        ax[1][1].set_ylim(-5, 175)
 
         plt.show()
