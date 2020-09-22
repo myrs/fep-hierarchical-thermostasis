@@ -553,7 +553,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         return ax
 
 
-class ActiveExteroception(ExteroceptiveAgent):
+class ActiveExteroceptiveAgent(ExteroceptiveAgent):
     """An agent now lives in the world where it can act
        In this world an agent can move up and down.
        Where moving up increases the amount of light 
