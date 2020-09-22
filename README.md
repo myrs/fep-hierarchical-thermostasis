@@ -4,7 +4,7 @@
 Mikhail Yaroshevskiy
 
 ## High-level description
-This code is part of the masters' thesis submitted for the degree of Intelligent and Adaptive Systems in University of Sussex by Mikhail Yaroshevskiy (2020).
+This code is part of the MSc thesis submitted for the degree in Intelligent and Adaptive Systems in University of Sussex by Mikhail Yaroshevskiy (2020).
 
 In this work, we show the limitations of the regulation of the essential variables (e.g. temperature) in a homeostatic way. We then show how an agent can be made more adaptive and survive not just by reacting to the environment, but by acting on dangerous tendencies of the world with anticipation. We use the active inference framework to operationalise our agent. Specifically, we develop a multi-layer generative model of the environmental dynamics where higher levels provide lower layers with set points of their dynamics. We argue, that a minimal allostatic model should have a capacity for both physiological and behavioural change to anticipate dangerous tendencies of the world. We have shown how a physiological change of an agent can be governed through environmental cue: our agent heats in advance in the world (by changing its preference about body temperature) where a decrease in light level (exteroceptive cue) is followed by temperature drop (simulating water temperature drop after sunset). This allows our agent to survive by having a dynamical trajectory of body temperature regulation (with a dynamically specified goal temperature) rather than regulating a temperature around a fixed set point. We then show that physiological allostatic change is not enough when an external unmodelled force is present in the world: in our case, we simulate a current, moving agent closer to the surface where the temperature of the world is too high to be counteracted by the body. Though, an agent that can perform a behavioural allostatic change -- act on the world -- can counteract dangerous tendencies by continuously finding better temperature regimes. Importantly, we have shown how this behaviour is guided (though dynamical set point) by the interoceptive needs of the temperature regulation and not exteroceptive sensations. It is therefore robust to noise inexact predictions of the generative model of the agent as its embodiment -- receiving feedback from the world through the body -- is what allows an agent to maintain its ultrastability.
 
@@ -44,12 +44,10 @@ For now the project can be run using python interactive console `python3` (`ipyt
 
 Run `ipython3` and then execute the following lines to see the results of a simulation of the interoceptive thermostasis agent:
 ```
-from thermostatis_agent import *
-# initialize Agent's world
-ia = InteroceptiveAgent()
-# run a simulation
-ia.simulate_perception()
+from simulation import *
+# simulate agent
+InteroceptiveAgent().simulate()
 ```
 
 To see results for the exteroceptive agent, change `InteroceptiveAgent` to `ExteroceptiveAgent`.
-To see results for the proprioceptive agent, change `InteroceptiveAgent` to `ProprioceptiveAgent`.
+To see results for the active exteroception agent, change `InteroceptiveAgent` to `ActiveExteroceptiveAgent`.

@@ -569,10 +569,11 @@ class ActiveExteroceptiveAgent(ExteroceptiveAgent):
        above. On a next level of the hierarchy the desired temperature is inferred."""
 
     def __init__(self, aex_s_z_0=0.1, aex_s_z_1=0.1, aex_s_w_0=0.1, aex_s_w_1=0.1,
-                 aex_action_bound=0.5, supress_action=False, learn_r_aex=None,
+                 aex_action_bound=0.2, supress_action=False, learn_r_aex=None,
                  supress_desired_temp_inference=False,
+                 simulate_current=True,
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(simulate_current=simulate_current, **kwargs)
 
         self.learn_r_aex = self.learn_r if learn_r_aex is None else learn_r_aex
 
@@ -730,6 +731,9 @@ class ActiveExteroceptiveAgent(ExteroceptiveAgent):
         self.interoception()
         # and active exteroception
         self.active_exteroception()
+
+    def simulate(self, sim_time=400, act_time=50):
+        super().simulate(sim_time=sim_time)
 
     def plot_results(self):
         ax = super().plot_results()
