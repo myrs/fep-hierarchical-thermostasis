@@ -19,16 +19,16 @@ def get_noise(scale=0.1, positive=False):
 class InteroceptiveAgent:
     """Interoceptive agent resembling homeostatic regulation """
 
-    def __init__(self, s_z_0=0.1, s_z_1=0.1, s_w_0=0.1, s_w_1=0.1,
+    def __init__(self, i_s_z_0=0.1, i_s_z_1=0.1, i_s_w_0=0.1, i_s_w_1=0.1,
                  action_bound=6, temp_const_change_initial=0,
                  learn_r_a=None,
                  temp_viable_range=10, dt=0.1, learn_r=0.1,
                  simulate_current=False):
         # sigma (variances) of sensory noise (z) and model noise (w)
-        self.s_z_0 = s_z_0
-        self.s_z_1 = s_z_1
-        self.s_w_0 = s_w_0
-        self.s_w_1 = s_w_1
+        self.i_s_z_0 = i_s_z_0
+        self.i_s_z_1 = i_s_z_1
+        self.i_s_w_0 = i_s_w_0
+        self.i_s_w_1 = i_s_w_1
 
         # learning rate
         self.learn_r = learn_r
@@ -52,14 +52,14 @@ class InteroceptiveAgent:
 
     def reset(self):
         # errors
-        self.e_z_0 = []
-        self.e_z_1 = []
-        self.e_w_0 = []
-        self.e_w_1 = []
+        self.i_e_z_0 = []
+        self.i_e_z_1 = []
+        self.i_e_w_0 = []
+        self.i_e_w_1 = []
 
         # senses
-        self.sense = []
-        self.sense_d1 = []
+        self.sense_i = []
+        self.sense_i_d1 = []
 
         # world
         # >> temperature params
@@ -92,9 +92,9 @@ class InteroceptiveAgent:
         self.temp_desire = [self.temp_viable_mean]
 
         # brain state mu
-        self.mu = [0]
-        self.mu_d1 = [0]
-        self.mu_d2 = [0]
+        self.mu_i = [0]
+        self.mu_i_d1 = [0]
+        self.mu_i_d2 = [0]
 
         # variational free energy
         # on the interoceptive layer
@@ -108,13 +108,13 @@ class InteroceptiveAgent:
 
     def generate_sense(self):
         sense = self.temp[-1] + get_noise()
-        self.sense.append(sense)
+        self.sense_i.append(sense)
 
     def generate_sense_d1(self):
         """ change in sensation is felt change in temperature """
-        sense_d1 = self.temp_change[-1] + get_noise()
+        sense_i_d1 = self.temp_change[-1] + get_noise()
 
-        self.sense_d1.append(sense_d1)
+        self.sense_i_d1.append(sense_i_d1)
 
     def update_world(self):
         """ update world parameters """
@@ -147,12 +147,9 @@ class InteroceptiveAgent:
         self.temp_change_instant_update.append(temp_change_instant_update)
 
     def upd_velocity(self):
-        # update velocity with friction
-        # TODO simulate friction!
-        # velocity = 0.9 * self.velocity[-1]
-        # velocity = self.velocity[-1]
         velocity = self.velocity_action[-1]
 
+        # simulate external force -- current after time step 300
         if self.simulate_current and self.time > 300:
             velocity += 0.1
 
@@ -170,8 +167,7 @@ class InteroceptiveAgent:
         self.light_change_environment.append(light_change_environment)
 
         # the light change due to velocity (Euler integrated)
-        # TODO a coefficient can be different, now assuming 1:1
-        # self.light_change_movement.append(self.velocity[-1] * self.dt)
+        # assuming 1:1 relationship
         self.light_change_movement.append(self.velocity[-1])
 
         # combined light change is light change due to environment
@@ -195,9 +191,7 @@ class InteroceptiveAgent:
         # first update by instant change in temperature change (Euler integrating)
         temp_change_environment += self.temp_change_instant_update[-1]
         # update movement effect by adding Euler integrated velocity
-        # TODO a coefficient or function can be different
-        # -- now assuming 1:1 relationship
-        # temp_change_environment += self.velocity[-1]
+        # assuming 1:1 relationship
         temp_change_environment += self.velocity[-1] * self.dt
         self.temp_change_environment.append(temp_change_environment)
 
@@ -205,7 +199,6 @@ class InteroceptiveAgent:
         # and change produced by the organism
         # add noise
         action = self.temp_change_action[-1] + get_noise() * self.dt
-        # action = self.temp_change_action[-1] + get_noise(positive=True, scale=0.2) * self.dt
         temp_change = self.temp_change_environment[-1] + action
 
         self.temp_change.append(temp_change)
@@ -220,61 +213,61 @@ class InteroceptiveAgent:
 
     def upd_err_z_0(self):
         # error between sensation and generated sensations
-        self.e_z_0.append(self.sense[-1] - self.mu[-1])
+        self.i_e_z_0.append(self.sense_i[-1] - self.mu_i[-1])
 
     def upd_err_z_1(self):
         # error between first derivatives of sensation and generated sensations
-        self.e_z_1.append(self.sense_d1[-1] - self.mu_d1[-1])
+        self.i_e_z_1.append(self.sense_i_d1[-1] - self.mu_i_d1[-1])
 
     def upd_err_w_0(self):
         # error between model and generation of model
         # here: model of dynamics at 1st derivative
         # and it's generation for the 1st derivative
-        self.e_w_0.append(self.mu_d1[-1] + self.mu[-1] - self.temp_desire[-1])
+        self.i_e_w_0.append(self.mu_i_d1[-1] + self.mu_i[-1] - self.temp_desire[-1])
 
     def upd_err_w_1(self):
         # error between model and generation of model
         # here: model of dynamics at 2nd derivative)
         # and it's generation for the 2nd derivative
-        self.e_w_1.append(self.mu_d2[-1] + self.mu_d1[-1])
+        self.i_e_w_1.append(self.mu_i_d2[-1] + self.mu_i_d1[-1])
 
-    def upd_mu_d2(self):
-        upd = -self.learn_r * (self.e_w_1[-1] / self.s_w_1)
+    def upd_mu_i_d2(self):
+        upd = -self.learn_r * (self.i_e_w_1[-1] / self.i_s_w_1)
         upd *= self.dt
 
-        self.mu_d2.append(self.mu_d2[-1] + upd)
+        self.mu_i_d2.append(self.mu_i_d2[-1] + upd)
 
-    def upd_mu_d1(self):
-        upd = -self.learn_r * (-self.e_z_1[-1] / self.s_z_1 +
-                               self.e_w_0[-1] / self.s_w_0 + self.e_w_1[-1] / self.s_w_1)
-        upd += self.mu_d2[-2]
+    def upd_mu_i_d1(self):
+        upd = -self.learn_r * (-self.i_e_z_1[-1] / self.i_s_z_1 +
+                               self.i_e_w_0[-1] / self.i_s_w_0 + self.i_e_w_1[-1] / self.i_s_w_1)
+        upd += self.mu_i_d2[-2]
         upd *= self.dt
 
-        self.mu_d1.append(self.mu_d1[-1] + upd)
+        self.mu_i_d1.append(self.mu_i_d1[-1] + upd)
 
-    def upd_mu(self):
+    def upd_mu_i(self):
         upd = -self.learn_r * \
-            (-self.e_z_0[-1] / self.s_z_0 + self.e_w_0[-1] / self.s_w_0)
-        upd += self.mu_d1[-2]
+            (-self.i_e_z_0[-1] / self.i_s_z_0 + self.i_e_w_0[-1] / self.i_s_w_0)
+        upd += self.mu_i_d1[-2]
         upd *= self.dt
 
-        self.mu.append(self.mu[-1] + upd)
+        self.mu_i.append(self.mu_i[-1] + upd)
 
     def upd_vfe_i(self):
         def sqrd_err(err, sigma):
             return np.power(err, 2) / sigma
 
-        vfe_i = 0.5 * (sqrd_err(self.e_z_0[-1], self.s_z_0) +
-                       sqrd_err(self.e_z_1[-1], self.s_z_1) +
-                       sqrd_err(self.e_w_0[-1], self.s_w_0) +
-                       sqrd_err(self.e_w_1[-1], self.s_w_1))
+        vfe_i = 0.5 * (sqrd_err(self.i_e_z_0[-1], self.i_s_z_0) +
+                       sqrd_err(self.i_e_z_1[-1], self.i_s_z_1) +
+                       sqrd_err(self.i_e_w_0[-1], self.i_s_w_0) +
+                       sqrd_err(self.i_e_w_1[-1], self.i_s_w_1))
 
         self.vfe_i.append(vfe_i)
 
     def upd_action(self):
         # TODO action is noisy! Add noise here but not forget about integration
         # sensation change over action is always 1
-        upd = -self.learn_r_a * 1 * (self.e_z_1[-1] / self.s_z_1)
+        upd = -self.learn_r_a * 1 * (self.i_e_z_1[-1] / self.i_s_z_1)
         upd *= self.dt
         action = self.temp_change_action[-1] + upd
 
@@ -299,9 +292,9 @@ class InteroceptiveAgent:
         self.upd_err_w_1()
 
         #  --> update recognition dynamics
-        self.upd_mu_d2()
-        self.upd_mu_d1()
-        self.upd_mu()
+        self.upd_mu_i_d2()
+        self.upd_mu_i_d1()
+        self.upd_mu_i()
 
         #  update free energy
         self.upd_vfe_i()
@@ -362,9 +355,9 @@ class InteroceptiveAgent:
         ax[2][0].set_xlim(-10, self.time + 30)
 
         # mu
-        ax[0][1].plot(timeline, self.mu[1:])
-        ax[0][1].plot(timeline, self.mu_d1[1:])
-        ax[0][1].plot(timeline, self.mu_d2[1:])
+        ax[0][1].plot(timeline, self.mu_i[1:])
+        ax[0][1].plot(timeline, self.mu_i_d1[1:])
+        ax[0][1].plot(timeline, self.mu_i_d2[1:])
         ax[0][1].set_title('Environmental variable, $\\mu$')
         ax[0][1].set_xlabel('time step')
         ax[0][1].set_ylabel('$\\mu$')
@@ -379,10 +372,10 @@ class InteroceptiveAgent:
         ax[1][1].set_ylim(-5, 500)
 
         # Error terms
-        ax[2][1].plot(timeline, running_mean(self.e_z_0), lw=0.75)
-        ax[2][1].plot(timeline, running_mean(self.e_z_1), lw=0.75)
-        ax[2][1].plot(timeline, running_mean(self.e_w_0), lw=0.75)
-        ax[2][1].plot(timeline, running_mean(self.e_w_1), lw=0.75)
+        ax[2][1].plot(timeline, running_mean(self.i_e_z_0), lw=0.75)
+        ax[2][1].plot(timeline, running_mean(self.i_e_z_1), lw=0.75)
+        ax[2][1].plot(timeline, running_mean(self.i_e_w_0), lw=0.75)
+        ax[2][1].plot(timeline, running_mean(self.i_e_w_1), lw=0.75)
         ax[2][1].set_ylim(-10, 10)
         ax[2][1].set_title('Error terms, $\\epsilon$')
         ax[2][1].set_xlabel('time step')
@@ -450,10 +443,10 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         self.ex_e_z_0 = []
         self.ex_e_w_0 = []
 
-        # brain state mu
+        # brain state mu of the exteroception layer
         self.ex_mu = [0]
 
-        # variational free energy
+        # variational free energy of the exteroception layer
         self.vfe_ex = []
 
     def generate_senses(self):
@@ -461,7 +454,6 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         self.generate_ex_sense()
 
     def generate_ex_sense(self):
-        # ex_sense = self.light_change[-1]
         ex_sense = self.light_change[-1] + get_noise()
         self.ex_sense.append(ex_sense)
 
@@ -489,7 +481,7 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         self.vfe.append(vfe)
 
     def exteroception(self):
-        # an agents performs exteroception
+        # the agent performs exteroception
         # that updates the desired temperature
         # setting new set point for the underlying
         # interoceptive inference
@@ -504,25 +496,18 @@ class ExteroceptiveAgent(InteroceptiveAgent):
         self.upd_vfe_ex()
 
     def update_world(self):
+        """ simulate light drop before temperature drop
+            for a short period of time to show the proof of concept """
         # update world as in Interoceptive Agent
         super().update_world()
 
-        # simulate light drop before temperature drop
-        # for a short period of time to show the proof of concept
-
         # change in light starts before the temperature drop
         if int(self.time) == 175:
-            # change by -0.7 (to -0.7)
             light_change_instant = -0.7
         elif int(self.time) == 200:
-            # elif int(self.time) == 225:
-            # change by +0.7 (to 0)
             light_change_instant = 0.7
         else:
             light_change_instant = 0
-
-        # TEST
-        # light_change_instant = 0
 
         self.light_change_instant.append(light_change_instant)
 
@@ -589,7 +574,7 @@ class ActiveExteroceptiveAgent(ExteroceptiveAgent):
         self.aex_s_z_0 = aex_s_z_0
         self.aex_s_w_0 = aex_s_w_0
 
-        # action bound
+        # action bound of the action on the world
         self.aex_action_bound = aex_action_bound
 
         self.supress_action = supress_action
@@ -602,11 +587,12 @@ class ActiveExteroceptiveAgent(ExteroceptiveAgent):
         self.aex_e_z_0 = [0]
         self.aex_e_w_0 = [0]
 
-        # mu
+        # mu of the exteroceptive layer -- inferred change in light
+        # produced by the agent
         self.aex_mu = [0]
         self.aex_mu_d1 = [0]
 
-        # variational free energy
+        # variational free energy of the active exteroception layer
         self.vfe_aex = []
 
         # action
@@ -642,54 +628,49 @@ class ActiveExteroceptiveAgent(ExteroceptiveAgent):
         self.aex_mu.append(self.aex_mu[-1] + upd)
 
     def upd_ex_err_z_0(self):
-        # error between sensation and generated sensations
-        # prediction = self.velocity_action[-1]
+        # update of the error calculation at the exteroception layer
+        # now we subtract the (prediction) of how much light change
+        # is generated by the agent acting on the world
         prediction = self.ex_sense[-1] - self.aex_action[-1]
-        # prediction = self.ex_sense[-1]
-        # prediction = self.ex_sense[-1] - self.aex_action_pre_bound[-1]
-        # prediction = 0
 
         self.ex_e_z_0.append(prediction - 0.1 * (-self.ex_mu[-1] + 30))
 
     def upd_aex_err_w_0(self):
-        # my expected dynamics is that environment temperature change
-        # needs to be explained
-        # setting point is when the inferred change int light
-        # corresponds to the change in temperature
+        """ agent's expected dynamics is that environment temperature change
+            needs to be explained
+            set point is when the inferred change in light
+            corresponds to the change in temperature """
 
-        t_change_goal = self.sense_d1[-1] - self.temp_change_action[-1]
-        # t_change_goal = self.sense_d1[-1] - self.mu_d1[-1]
+        t_change_goal = self.sense_i_d1[-1] - self.temp_change_action[-1]
         self.aex_e_w_0.append(self.aex_mu_d1[-1] - t_change_goal + self.aex_mu[-1])
 
     def upd_aex_err_z_0(self):
-        """ error between sensation and generated sensation
-        sensation: change in light
-        generated by: change in temperature of the environment
+        """ sensory error is the difference between the best guess
+        about the change in light and the agent's prediction about it
+        (through the copy of action)
         """
-        # error = self.ex_sense[-1] - 0.1 * (-self.ex_mu[-1] + 30)
-        # error = self.velocity_action[-1]
+
         error = self.aex_action[-1]
-        # error = self.aex_action_pre_bound[-1]
-        # error = self.ex_sense[-1]
         self.aex_e_z_0.append(error - (-self.aex_mu[-1]))
 
     def upd_avfe_ex(self):
+        """ active exteroception VFE """
         def sqrd_err(err, sigma):
             return np.power(err, 2) / sigma
 
-        # vfe is very similar to interoception, but precision is set
-        # for exteroception case
         vfe_aex = 0.5 * (sqrd_err(self.aex_e_z_0[-1], self.aex_s_z_0)
                          + sqrd_err(self.aex_e_w_0[-1], self.aex_s_w_0))
 
         self.vfe_aex.append(vfe_aex)
 
     def upd_vfe(self):
+        """ total VFE """
         vfe = self.vfe_i[-1] + self.vfe_ex[-1] + self.vfe_aex[-1]
         self.vfe.append(vfe)
 
     def upd_action(self):
         super().upd_action()
+
         # sensation change over action is always 1
         upd = -self.learn_r_aex * 1 * (self.aex_e_z_0[-1] / self.aex_s_z_0)
         upd *= self.dt
@@ -712,9 +693,9 @@ class ActiveExteroceptiveAgent(ExteroceptiveAgent):
         self.aex_action_pre_bound.append(self.aex_action_pre_bound[-1])
 
     def active_exteroception(self):
-        # an agents performs action
-        # based on it's exteroceptive inference
-        # about how temperature change causes light change
+        """ an agents performs action
+            based on it's exteroceptive inference
+            about how temperature change causes light change """
         self.upd_aex_mu_d1()
         self.upd_aex_mu()
 
@@ -745,9 +726,6 @@ class ActiveExteroceptiveAgent(ExteroceptiveAgent):
 
         timeline = [s * self.dt for s in range(self.steps)]
 
-        # ax[2][0].plot(timeline, self.velocity[1:])
-        # ax[2][0].set_title('velocity')
-
         # change in light
         ax[0][1].plot(timeline, self.aex_mu[1:], ls='--')
         ax[0][1].legend(['$\\mu_i$', "$\\mu_i'$", "$\\mu_i''$",
@@ -762,12 +740,18 @@ class ActiveExteroceptiveAgent(ExteroceptiveAgent):
                         labelspacing=0)
         ax[2][1].set_ylim(-3.5, 3.5)
 
-        # action actually produced by the organism (including environmental noise)
-        # light_change_env = np.array(self.velocity) - np.array(self.velocity_action)
+        # change in light produced by the external force
+        # is 0.1 after the time step 300
         light_change_external = np.zeros(self.steps + 1)
         light_change_external[3000:] = 0.1
+
+        # environmental change in light (e.g. modelled sunset/sunrise)
+        # is all change in light minus change in light generated by the agent's action
+        # and generated by the external force dragging agent closer to surface
         light_change_env = np.array(self.light_change) - np.array(self.velocity_action) \
             - light_change_external
+
+        # action  produced by the organism (including environmental noise)
         ax[2][0].plot(timeline, running_mean(self.velocity_action[1:]), lw=0.75)
         ax[2][0].plot(timeline, light_change_env[1:], lw=1, c='tab:red', ls='--')
         ax[2][0].plot(timeline[3000:], light_change_external[3001:], lw=1, c='tab:green')
